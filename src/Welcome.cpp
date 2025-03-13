@@ -1,10 +1,13 @@
-//#include <cstdio>
 #include <iostream>
 
 int
-main()
+main(int argc, char* argv[])
 {
-  //printf("Welcome to modern C++\n");
-  std::cout << "Welcome to modern C++\n";
+  using namespace std;
+
+  cout << "Welcome to modern C++\n";
+  cout << "Command line:\n";
+  for (int i = 0; i < argc;)
+    cout << argv[i++] << '\n';
   return 0;
 }
