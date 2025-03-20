@@ -1,6 +1,7 @@
 #include "TypeTest.h"
 
-int main()
+int
+main()
 {
   // insert your code here
   return 0;
