@@ -217,8 +217,8 @@ arrayTest()
   printTypeInfo(q);
   *q[0] = 1; // (q[0][0] = 1) == (ia2x3_1[0][0] = 1)
 
-  int ia3x2_1[][2] = {1, 2, 3, 4, 5};
-  int ia3x2_2[][2] = {{1, 2}, {3, 4}, {5}};
+  int ia3x2_1[][2]{1, 2, 3, 4, 5};
+  int ia3x2_2[][2]{{1, 2}, {3, 4}, {5}};
 
   f(ia10_1);
   f(ia3x2_1);
@@ -226,8 +226,8 @@ arrayTest()
   using IntTable = uint[]; // incomplete type
 
   // Types defined by initilization
-  IntTable f1 = {1, 2};
-  IntTable f2 = {1, 2, 3};
+  IntTable f1{1, 2};
+  IntTable f2{1, 2, 3};
 
   printTypeInfo(f1);
   printTypeInfo(f2);
