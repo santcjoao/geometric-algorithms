@@ -174,6 +174,84 @@ structTypeTest()
   printTypeInfo<Y>();
 }
 
+using uint = unsigned;
+
+// Arrays cannot be function parameters
+inline void
+f(int a[10])
+{
+  puts("int[10] decays to int*:");
+  printTypeInfo(a);
+}
+
+inline void
+f(int a[][2])
+{
+  puts("int[][2] decays to int(*)[2]:");
+  printTypeInfo(a);
+}
+
+inline void
+arrayTest()
+{
+  puts("\n**ARRAY INITIALIZATION");
+
+  using IA10 = int[10];
+
+  IA10 ia10_1;
+  // Arrays are not copied
+  auto p = ia10_1; // decays to int*
+
+  printTypeInfo(p);
+  *p = 1; // (p[0] = 1) == (ia10_1[0] = 1)
+
+  int ia10_2[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  int ia3_1[3]{1, 2, 3};
+  int ia3_2[3]{1};
+
+  using IA2x3 = int[2][3];
+
+  IA2x3 ia2x3_1;
+  auto q = ia2x3_1; // decays to int(*)[3]
+
+  printTypeInfo(q);
+  *q[0] = 1; // (q[0][0] = 1) == (ia2x3_1[0][0] = 1)
+
+  int ia3x2_1[][2] = {1, 2, 3, 4, 5};
+  int ia3x2_2[][2] = {{1, 2}, {3, 4}, {5}};
+
+  f(ia10_1);
+  f(ia3x2_1);
+
+  using IntTable = uint[]; // incomplete type
+
+  // Types defined by initilization
+  IntTable f1 = {1, 2};
+  IntTable f2 = {1, 2, 3};
+
+  printTypeInfo(f1);
+  printTypeInfo(f2);
+}
+
+// Func is a function, not a function pointer (int(*)(uint))
+using Func = uint(uint);
+
+inline uint
+f(uint a) // f is a Func
+{
+  return a;
+}
+
+// Functions cannot be function parameters
+inline void
+funcFuncTest(Func f)
+{
+  puts("\n**FUNCTION AS FUNCTION PARAMETER");
+  puts("Func decays to int(*)(uint):");
+  printTypeInfo(f);
+  f(2); // (*f)(2);
+}
+
 } // end namespace tcii::tests
 
 inline void
@@ -183,6 +261,8 @@ typeTest()
 
   numericTypeTest();
   structTypeTest();
+  arrayTest();
+  funcFuncTest(f);
 }
 
 #endif // __TypeTest_h
