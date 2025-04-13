@@ -1,6 +1,7 @@
 #ifndef __TypeTest_h
 #define __TypeTest_h
 
+#include "Vec3.h"
 #include <iostream>
 
 namespace tcii::tests
@@ -87,46 +88,26 @@ numericTypeTest()
   printTypeInfo(ld);
 }
 
-#define ASSERT_REAL(T, msg) static_assert(std::floating_point<T>, msg)
-
-template <typename T>
-struct Vec3
-{
-  ASSERT_REAL(T, "Vec3: floating-point type expected");
-
-  T x;
-  T y;
-  T z;
-};
-
-template <typename T>
-std::ostream&
-operator <<(std::ostream& os, const Vec3<T>& v)
-{
-  os << '(' << v.x << ',' << v.y << ',' << v.z << ')' <<  '\n';
-  return os;
-}
-
-template <typename T>
+template <typename real>
 struct Matrix33
 {
-  Vec3<T> v0;
-  Vec3<T> v1;
-  Vec3<T> v2;
+  cg::Vec3<real> v0;
+  cg::Vec3<real> v1;
+  cg::Vec3<real> v2;
 };
 
-template <typename T>
+template <typename real>
 std::ostream&
-operator <<(std::ostream& os, const Matrix33<T>& m)
+operator <<(std::ostream& os, const Matrix33<real>& m)
 {
-  os << m.v0 << m.v1 << m.v2;
+  os << m.v0 << '\n' << m.v1 << '\n' << m.v2 << '\n';
   return os;
 }
 
 inline void
 structTypeTest()
 {
-  using Vec3f = Vec3<float>;
+  using namespace cg;
   using Matrix33f = Matrix33<float>;
 
   puts("\n**STRUCT INITIALIZATION");

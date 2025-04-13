@@ -57,6 +57,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -74,6 +75,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
