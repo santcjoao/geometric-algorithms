@@ -42,7 +42,7 @@ template <typename T>
 std::ostream&
 operator <<(std::ostream& os, const Ray3<T>& r)
 {
-  os << 'o' << r.origin << ' ' << 'd' << r.direction();;
+  os << 'o' << r.origin << ' ' << 'd' << r.direction();
   return os;
 }
 
