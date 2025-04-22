@@ -29,8 +29,8 @@ public:
     return _radius;
   }
 
-  virtual Bounds3f bounds() const override;
-  virtual void render(Renderer&) const override;
+  virtual Bounds3f bounds() const final;
+  virtual void render(Renderer&) const final;
 
 private:
   float _radius;

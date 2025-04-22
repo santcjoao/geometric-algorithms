@@ -110,15 +110,15 @@ structTypeTest()
   using namespace cg;
   using Matrix33f = Matrix33<float>;
 
-  puts("\n**STRUCT INITIALIZATION");
+  puts("\n**STRUCT (POD) INITIALIZATION");
 
   // Initialize using initializer list ('=' is not needed)
   Vec3f p{1, 2, 3};
   Vec3f q{};
 
   printTypeInfo<Vec3f>();
-  std::cout << 'p' << p;
-  std::cout << 'q' << q << "---\n";
+  std::cout << 'p' << p << '\n';
+  std::cout << 'q' << q << "\n---\n";
 
   Matrix33f a{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
   Matrix33f z{};
@@ -142,8 +142,8 @@ structTypeTest()
   X x{{{1, 2, 3}, {4, 5, 6}}, 7};
 
   printTypeInfo(x);
-  std::cout << "x.a.p" << x.a.p;
-  std::cout << "x.a.q" << x.a.q;
+  std::cout << "x.a.p" << x.a.p << '\n';
+  std::cout << "x.a.q" << x.a.q << '\n';
   std::cout << "x.f: " << x.f << "\n---\n";
 
   struct Y

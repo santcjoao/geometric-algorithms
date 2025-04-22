@@ -86,6 +86,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\tests\FuncTest.h" />
+    <ClInclude Include="..\..\tests\InitTest.h" />
     <ClInclude Include="..\..\tests\TypeTest.h" />
   </ItemGroup>
   <ItemGroup>

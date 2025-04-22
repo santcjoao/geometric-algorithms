@@ -71,7 +71,7 @@ constexpr auto pi = static_cast<T>(3.14159);
 inline void
 funcTest()
 {
-  puts("\n**FUNCTION TEMPLATES/CONSTEXPR FUNCTION");
+  puts("\n**FUNCTION TEMPLATES/CONSTEXPR FUNCTIONS");
 
   using namespace tcii::tests;
 
