@@ -13,10 +13,10 @@ namespace tcii::ex
 // =========
 struct BlockInfo
 {
-	unsigned flag;
-	unsigned size;
-	BlockInfo* prev;
-	BlockInfo* next;
+  unsigned flag;
+  unsigned size;
+  BlockInfo* prev;
+  BlockInfo* next;
 
 }; // BlockInfo
 
@@ -28,21 +28,21 @@ struct BlockInfo
 class Allocator
 {
 public:
-	static constexpr auto minBlockSize = 16u;
-	static constexpr auto heapSize = 1048576u;
+  static constexpr auto minBlockSize = 16u;
+  static constexpr auto heapSize = 1048576u;
 
-	static void initialize(unsigned = heapSize);
-	template <typename T> static T* allocate(unsigned = 1);
-	static void free(void*);
-	static void printMemoryMap();
-	static void exit();
+  static void initialize(unsigned = heapSize);
+  template <typename T> static T* allocate(unsigned = 1);
+  static void free(void*);
+  static void printMemoryMap();
+  static void exit();
 
 private:
-	static Allocator* _instance;
-	// insert your code here
+  static Allocator* _instance;
+  // insert your code here
 
 }; // Allocator
 
-} // begin namespace tcii::ex
+} // end namespace tcii::ex
 
 #endif // __GC_h

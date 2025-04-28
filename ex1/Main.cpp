@@ -3,9 +3,9 @@
 inline void
 allocatorTest()
 {
-	using namespace tcii::ex;
+  using namespace tcii::ex;
 
-	// insert your code here
+  // insert your code here
 }
 
 //
@@ -14,6 +14,6 @@ allocatorTest()
 int
 main()
 {
-	allocatorTest();
-	return 0;
+  allocatorTest();
+  return 0;
 }

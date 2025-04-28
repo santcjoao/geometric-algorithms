@@ -12,4 +12,4 @@ Allocator* Allocator::_instance;
 
 // insert your code here
 
-} // begin namespace tcii::ex
+} // end namespace tcii::ex
