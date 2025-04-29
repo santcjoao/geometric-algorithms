@@ -3,8 +3,8 @@
 
 #include <string>
 
-namespace tcii::physx
-{ // begin namespace tcii::physx
+namespace tcii::cg
+{ // begin namespace tcii::cg
 
 class NameableObject
 {
@@ -30,6 +30,6 @@ private:
 
 }; // NameableObject
 
-} // end namespace tcii::physx
+} // end namespace tcii::cg
 
 #endif // __NameableObject_h

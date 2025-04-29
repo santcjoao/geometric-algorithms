@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\util\NameableObject.h" />
     <ClInclude Include="..\..\physx\Actor.h" />
-    <ClInclude Include="..\..\physx\NameableObject.h" />
     <ClInclude Include="..\..\physx\ObjectList.h" />
     <ClInclude Include="..\..\physx\Renderer.h" />
     <ClInclude Include="..\..\physx\RigidBody.h" />
@@ -22,10 +22,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\physx\Main.cpp" />
-    <ClCompile Include="..\..\physx\NameableObject.cpp" />
     <ClCompile Include="..\..\physx\RigidBody.cpp" />
     <ClCompile Include="..\..\physx\Scene.cpp" />
     <ClCompile Include="..\..\physx\SphereShape.cpp" />
+    <ClCompile Include="..\..\src\util\NameableObject.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

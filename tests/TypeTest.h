@@ -1,7 +1,7 @@
 #ifndef __TypeTest_h
 #define __TypeTest_h
 
-#include "Vec3.h"
+#include "graphics/Vec3.h"
 #include <iostream>
 
 namespace tcii::tests

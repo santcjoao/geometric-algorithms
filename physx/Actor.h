@@ -1,8 +1,8 @@
 #ifndef __Actor_h
 #define __Actor_h
 
-#include "Bounds3.h"
-#include "NameableObject.h"
+#include "graphics/Bounds3.h"
+#include "util/NameableObject.h"
 #include "ObjectList.h"
 
 namespace tcii::physx

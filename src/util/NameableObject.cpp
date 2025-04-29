@@ -1,9 +1,9 @@
-#include "NameableObject.h"
+#include "util/NameableObject.h"
 #include <cstdarg>
 #include <cstdio>
 
-namespace tcii::physx
-{ // begin namespace tcii::physx
+namespace tcii::cg
+{ // begin namespace tcii::cg
 
 void
 NameableObject::setName(const char* format, ...)
@@ -17,4 +17,4 @@ NameableObject::setName(const char* format, ...)
   _name = buffer;
 }
 
-} // end namespace tcii::physx
+} // end namespace tcii::cg

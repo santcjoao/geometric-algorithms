@@ -8,7 +8,7 @@ namespace tcii::physx
 
 template <typename T>
 inline void
-release(T* object)
+destroy(T* object)
 {
   delete object;
 }
@@ -181,7 +181,7 @@ ObjectList<T>::clear()
   while (auto temp = _head)
   {
     _head = next(temp);
-    release(temp);
+    destroy(temp);
   }
   _tail = nullptr, _count = 0;
 }

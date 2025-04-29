@@ -21,7 +21,7 @@ main()
   Renderer renderer;
 
   scene->render(renderer);
-  release(scene);
+  destroy(scene);
   puts("Press any key to exit...");
   (void)getchar();
   return 0;

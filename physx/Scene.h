@@ -50,7 +50,7 @@ Scene::removeActor(Actor* actor)
   if (actor->_scene == this)
   {
     _actors.remove(actor);
-    release(actor);
+    destroy(actor);
   }
 }
 

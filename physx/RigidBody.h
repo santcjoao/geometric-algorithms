@@ -52,7 +52,7 @@ RigidBody::removeShape(Shape* shape)
   if (shape->_actor == this)
   {
     _shapes.remove(shape);
-    release(shape);
+    destroy(shape);
   }
 }
 

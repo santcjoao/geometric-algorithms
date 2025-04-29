@@ -1,7 +1,7 @@
 #ifndef __Bounds3_h
 #define __Bounds3_h
 
-#include "Vec3.h"
+#include "graphics/Vec3.h"
 
 namespace tcii::cg
 { // begin namespace tcii::cg

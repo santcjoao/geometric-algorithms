@@ -1,7 +1,7 @@
 #ifndef __Renderer_h
 #define __Renderer_h
 
-#include "Vec3.h"
+#include "graphics/Vec3.h"
 
 namespace tcii::physx
 { // begin namespace tcii::physx
