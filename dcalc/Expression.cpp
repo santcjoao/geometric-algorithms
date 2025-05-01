@@ -19,7 +19,9 @@ struct NullExpression final: Expression::Body
   }
 
   float eval(float) const final;
-  Expression composedWith(const Expression&) const final;
+  Expression add(const Expression&) const final;
+  Expression mul(const Expression&) const final;
+  Expression composite(const Expression&) const final;
   Expression diff() const final;
   std::string toString() const final;
 
@@ -32,7 +34,19 @@ NullExpression::eval(float) const
 }
 
 Expression
-NullExpression::composedWith(const Expression&) const
+NullExpression::add(const Expression&) const
+{
+  throw badInvocation("NullExpression", __func__);
+}
+
+Expression
+NullExpression::mul(const Expression&) const
+{
+  throw badInvocation("NullExpression", __func__);
+}
+
+Expression
+NullExpression::composite(const Expression&) const
 {
   throw badInvocation("NullExpression", __func__);
 }
@@ -52,30 +66,144 @@ NullExpression::toString() const
 
 //////////////////////////////////////////////////////////
 //
-// Constant implementation
-// ========
-float
-Constant::eval(float) const
+// BinaryExpression class
+// ================
+struct BinaryExpression: Expression::Body
 {
-  return value;
-}
+  const Expression e1;
+  const Expression e2;
+  const char op;
 
-Expression
-Constant::composedWith(const Expression&) const
-{
-  return *this;
-}
+  BinaryExpression(const Expression& e1, const Expression e2, char op):
+    e1{e1},
+    e2{e2},
+    op{op}
+  {
+    // do nothing
+  }
 
-Expression
-Constant::diff() const
-{
-  return 0;
-}
+  std::string toString() const override;
+
+}; // BinaryExpression
 
 std::string
-Constant::toString() const
+BinaryExpression::toString() const
 {
-  return std::format("{}", value);
+  return e1.toString() + op + e2.toString();
+}
+
+
+//////////////////////////////////////////////////////////
+//
+// AddExpression class
+// =============
+struct AddExpression: BinaryExpression
+{
+  AddExpression(const Expression& e1, const Expression& e2):
+    BinaryExpression{e1, e2, '+'}
+  {
+    // do nothing
+  }
+
+  float eval(float) const override;
+  Expression add(const Expression&) const override;
+  Expression mul(const Expression&) const override;
+  Expression composite(const Expression&) const override;
+  Expression diff() const override;
+
+}; // AddExpression
+
+float
+AddExpression::eval(float x) const
+{
+  return e1.eval(x) + e2.eval(x);
+}
+
+Expression
+AddExpression::add(const Expression& e) const
+{
+  if (auto a = as<AddExpression>(e))
+  {
+    Expression r = *this;
+    return r + a->e1 + a->e2;
+  }
+
+  auto r1 = body(e1)->add(e);
+  auto n1 = r1.isNull();
+  auto r2 = e2;
+  auto n2 = true;
+
+  if (n1)
+  {
+    r2 = body(e2)->add(e);
+    n2 = r2.isNull();
+    r1 = e1;
+  }
+  return n1 && n2 ? Expression{} : r1 + r2;
+}
+
+Expression
+AddExpression::mul(const Expression& e) const
+{
+  // TODO
+  return Expression{};
+}
+
+Expression
+AddExpression::composite(const Expression& e) const
+{
+  return e1.composite(e) + e2.composite(e);
+}
+
+Expression
+AddExpression::diff() const
+{
+  return e1.diff() + e2.diff();
+}
+
+
+//////////////////////////////////////////////////////////
+//
+// MulExpression class
+// =============
+struct MulExpression: BinaryExpression
+{
+  MulExpression(const Expression& e1, const Expression& e2):
+    BinaryExpression{e1, e2, '*'}
+  {
+    // do nothing
+  }
+
+  float eval(float) const override;
+  Expression mul(const Expression&) const override;
+  Expression composite(const Expression&) const override;
+  Expression diff() const override;
+
+}; // MulExpression
+
+float
+MulExpression::eval(float x) const
+{
+  return e1.eval(x) * e2.eval(x);
+}
+
+Expression
+MulExpression::mul(const Expression& e) const
+{
+  // TODO
+  return Expression{};
+}
+
+Expression
+MulExpression::composite(const Expression& e) const
+{
+  return e1.composite(e) * e2.composite(e);
+}
+
+Expression
+MulExpression::diff() const
+{
+  return e1.diff() * e2 + e1 * e2.diff();
 }
 
 
@@ -98,7 +226,9 @@ public:
   }
 
   float eval(float) const final;
-  Expression composedWith(const Expression&) const final;
+  Expression add(const Expression&) const final;
+  Expression mul(const Expression&) const final;
+  Expression composite(const Expression&) const final;
   Expression diff() const final;
   std::string toString() const final;
 
@@ -113,11 +243,33 @@ Term::eval(float x) const
 }
 
 Expression
-Term::composedWith(const Expression& e) const
+Term::add(const Expression& e) const
 {
-  if (auto c = e.as<Constant>())
+  if (auto t = as<Term>(e))
+    if (n == t->n)
+    {
+      if (auto a = this->a + t->a)
+        return Expression::term(n, a);
+      return 0;
+    }
+  if (auto a = as<AddExpression>(e))
+    return a->add(*this);
+  return Expression{};
+}
+
+Expression
+Term::mul(const Expression& e) const
+{
+  // TODO
+  return Expression{};
+}
+
+Expression
+Term::composite(const Expression& e) const
+{
+  if (auto c = as<Constant>(e))
     return Term::eval(c->value);
-  if (auto t = e.as<Term>())
+  if (auto t = as<Term>(e))
     return Expression::term(n * t->n, a * t->a);
   return e.pow(n) * a;
 }
@@ -142,67 +294,68 @@ Term::toString() const
 
 //////////////////////////////////////////////////////////
 //
-// BinaryExpression class
-// ================
-struct BinaryExpression: Expression::Body
+// Constant implementation
+// ========
+float
+Constant::eval(float) const
 {
-  Expression _e1;
-  Expression _e2;
-  char _op;
+  return value;
+}
 
-  BinaryExpression(const Expression& e1, const Expression e2, char op):
-    _e1{e1},
-    _e2{e2},
-    _op{op}
-  {
-    // do nothing
-  }
+Expression
+Constant::add(const Expression& e) const
+{
+  if (auto c = as<Constant>(e))
+    return value + c->value;
+  if (auto a = as<AddExpression>(e))
+    return a->add(*this);
+  return Expression{};
+}
 
-  std::string toString() const override;
+Expression
+Constant::mul(const Expression& e) const
+{
+  if (auto c = as<Constant>(e))
+    return value * c->value;
+  if (auto t = as<Term>(e))
+    return Expression::term(t->n, value * t->a);
+  // TODO
+  return Expression{};
+}
 
-}; // BinaryExpression
+Expression
+Constant::composite(const Expression&) const
+{
+  return *this;
+}
+
+Expression
+Constant::diff() const
+{
+  return 0;
+}
 
 std::string
-BinaryExpression::toString() const
+Constant::toString() const
 {
-  return _e1.toString() + _op + _e2.toString();
+  return std::format("{}", value);
 }
 
 
 //////////////////////////////////////////////////////////
 //
-// AddExpression class
-// =============
-struct AddExpression: BinaryExpression
+// Expression::Body implementation
+// ================
+Expression
+Expression::Body::add(const Expression&) const
 {
-  AddExpression(const Expression& e1, const Expression& e2):
-    BinaryExpression{e1, e2, '+'}
-  {
-    // do nothing
-  }
-
-  float eval(float) const override;
-  Expression composedWith(const Expression&) const override;
-  Expression diff() const override;
-
-}; // AddExpression
-
-float
-AddExpression::eval(float x) const
-{
-  return _e1.eval(x) + _e2.eval(x);
+  return Expression{};
 }
 
 Expression
-AddExpression::composedWith(const Expression& e) const
+Expression::Body::mul(const Expression&) const
 {
-  return _e1.composedWith(e) + _e2.composedWith(e);
-}
-
-Expression
-AddExpression::diff() const
-{
-  return _e1.diff() + _e2.diff();
+  return Expression{};
 }
 
 
@@ -213,26 +366,18 @@ AddExpression::diff() const
 Expression
 Expression::operator +(const Expression& e) const
 {
-  if (auto e1 = as<Constant>())
+  if (auto r = _body->add(e); !r.isNull())
+    return r;
+  if (auto e1 = Body::as<Constant>(*this))
   {
     if (e1->value == 0)
       return e;
-    if (auto e2 = e.as<Constant>())
-      return e1->value + e2->value;
   }
-  else if (auto e2 = e.as<Constant>())
+  else if (auto e2 = Body::as<Constant>(e))
   {
     if (e2->value == 0)
       return *this;
   }
-  else if (auto e1 = as<Term>())
-    if (auto e2 = e.as<Term>())
-      if (e1->n == e2->n)
-      {
-        if (auto a = e1->a + e2->a)
-          return term(e1->n, a);
-        return 0;
-      }
   return *new AddExpression{*this, e};
 }
 
@@ -240,35 +385,35 @@ Expression
 Expression::operator -(const Expression& e) const
 {
   // TODO
-  return null();
+  return Expression{};
 }
 
 Expression
 Expression::operator *(const Expression& e) const
 {
   // TODO
-  return null();
+  return *new MulExpression{*this, e};
 }
 
 Expression
 Expression::operator /(const Expression& e) const
 {
   // TODO
-  return null();
+  return Expression{};
 }
 
 Expression
 Expression::operator -() const
 {
   // TODO
-  return null();
+  return Expression{};
 }
 
 Expression
 Expression::pow(const Expression& e) const
 {
   // TODO
-  return null();
+  return Expression{};
 }
 
 Expression

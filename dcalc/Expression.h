@@ -10,7 +10,6 @@ namespace tcii::dcalc
 using namespace cg;
 
 
-
 //////////////////////////////////////////////////////////
 //
 // Expression class
@@ -39,9 +38,10 @@ public:
   Expression& operator /=(const Expression&);
 
   float eval(float) const;
-  Expression composedWith(const Expression&) const;
+  Expression composite(const Expression&) const;
   Expression diff() const;
   std::string toString() const;
+  bool isNull() const;
 
 private:
   ObjectPtr<Body> _body{&null()};
@@ -52,13 +52,9 @@ private:
     // do nothing
   }
 
-  template <typename E> auto as() const
-  {
-    return dynamic_cast<E*>(_body.get());
-  }
-
   static const Body& null();
 
+  friend class Constant;
   friend class Term;
 
 }; // Expression
@@ -80,13 +76,25 @@ public:
   virtual ~Body() = default;
 
   virtual float eval(float) const = 0;
-  virtual Expression composedWith(const Expression&) const = 0;
+  virtual Expression add(const Expression&) const;
+  virtual Expression mul(const Expression&) const;
+  virtual Expression composite(const Expression&) const = 0;
   virtual Expression diff() const = 0;
   virtual std::string toString() const = 0;
 
   operator Expression() const
   {
     return Expression{*this};
+  }
+
+  static auto body(const Expression& e)
+  {
+    return e._body.get();
+  }
+
+  template <typename E> static auto as(const Expression& e)
+  {
+    return dynamic_cast<E*>(body(e));
   }
 
 }; // Expression::Body
@@ -96,8 +104,9 @@ public:
 //
 // Constant class
 // ========
-struct Constant final: Expression::Body
+class Constant final: public Expression::Body
 {
+public:
   const float value;
 
   Constant(float value):
@@ -107,7 +116,9 @@ struct Constant final: Expression::Body
   }
 
   float eval(float) const final;
-  Expression composedWith(const Expression&) const final;
+  Expression add(const Expression&) const final;
+  Expression mul(const Expression&) const final;
+  Expression composite(const Expression&) const final;
   Expression diff() const final;
   std::string toString() const final;
 
@@ -131,9 +142,9 @@ Expression::eval(float x) const
 }
 
 inline Expression
-Expression::composedWith(const Expression& e) const
+Expression::composite(const Expression& e) const
 {
-  return _body->composedWith(e);
+  return _body->composite(e);
 }
 
 inline Expression
@@ -176,6 +187,12 @@ inline Expression&
 Expression::operator /=(const Expression& e)
 {
   return *this = *this / e;
+}
+
+inline bool
+Expression::isNull() const
+{
+  return _body == &null();
 }
 
 } // end namespace tcii::dcalc
