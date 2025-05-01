@@ -145,8 +145,16 @@ AddExpression::add(const Expression& e) const
 Expression
 AddExpression::mul(const Expression& e) const
 {
-  // TODO
-  return Expression{};
+  if (auto a = as<AddExpression>(e))
+  {
+    Expression r = *this;
+    return r * a->e1 + r * a->e2;
+  }
+
+  auto r1 = body(e1)->mul(e);
+  auto r2 = body(e2)->mul(e);
+
+  return r1 + r2;
 }
 
 Expression
@@ -190,8 +198,24 @@ MulExpression::eval(float x) const
 Expression
 MulExpression::mul(const Expression& e) const
 {
-  // TODO
-  return Expression{};
+  if (auto a = as<MulExpression>(e))
+  {
+    Expression r = *this;
+    return r * a->e1 * a->e2;
+  }
+
+  auto r1 = body(e1)->mul(e);
+  auto n1 = r1.isNull();
+  auto r2 = e2;
+  auto n2 = true;
+
+  if (n1)
+  {
+    r2 = body(e2)->mul(e);
+    n2 = r2.isNull();
+    r1 = e1;
+  }
+  return n1 && n2 ? Expression{} : r1 * r2;
 }
 
 Expression
@@ -247,11 +271,7 @@ Term::add(const Expression& e) const
 {
   if (auto t = as<Term>(e))
     if (n == t->n)
-    {
-      if (auto a = this->a + t->a)
-        return Expression::term(n, a);
-      return 0;
-    }
+      return Expression::term(n, a + t->a);
   if (auto a = as<AddExpression>(e))
     return a->add(*this);
   return Expression{};
@@ -260,7 +280,14 @@ Term::add(const Expression& e) const
 Expression
 Term::mul(const Expression& e) const
 {
-  // TODO
+  if (auto c = as<Constant>(e))
+    return Expression::term(n, c->value * a);
+  if (auto t = as<Term>(e))
+    return Expression::term(n + t->n, a * t->a);
+  if (auto a = as<AddExpression>(e))
+    return a->mul(*this);
+  if (auto m = as<MulExpression>(e))
+    return m->mul(*this);
   return Expression{};
 }
 
@@ -319,7 +346,10 @@ Constant::mul(const Expression& e) const
     return value * c->value;
   if (auto t = as<Term>(e))
     return Expression::term(t->n, value * t->a);
-  // TODO
+  if (auto a = as<AddExpression>(e))
+    return a->mul(*this);
+  if (auto m = as<MulExpression>(e))
+    return m->mul(*this);
   return Expression{};
 }
 
@@ -391,7 +421,22 @@ Expression::operator -(const Expression& e) const
 Expression
 Expression::operator *(const Expression& e) const
 {
-  // TODO
+  if (auto r = _body->mul(e); !r.isNull())
+    return r;
+  if (auto e1 = Body::as<Constant>(*this))
+  {
+    if (e1->value == 0)
+      return 0;
+    if (e1->value == 1)
+      return e;
+  }
+  else if (auto e2 = Body::as<Constant>(e))
+  {
+    if (e2->value == 0)
+      return 0;
+    if (e2->value == 1)
+      return *this;
+  }
   return *new MulExpression{*this, e};
 }
 
