@@ -30,18 +30,22 @@ public:
   Expression operator +() const;
   Expression pow(const Expression&) const;
 
-  static Expression term(float = 1, float = 1);
-
   Expression& operator +=(const Expression&);
   Expression& operator -=(const Expression&);
   Expression& operator *=(const Expression&);
   Expression& operator /=(const Expression&);
+
+  bool operator !=(const Expression&) const;
+  bool operator ==(const Expression&) const;
 
   float eval(float) const;
   Expression composite(const Expression&) const;
   Expression diff() const;
   std::string toString() const;
   bool isNull() const;
+
+  static Expression term(float, float);
+  static Expression exp(const Expression&);
 
 private:
   ObjectPtr<Body> _body{&null()};
@@ -59,11 +63,7 @@ private:
 
 }; // Expression
 
-inline auto
-x()
-{
-  return Expression::term();
-}
+Expression x(float exponent = 1, float coefficient = 1);
 
 
 //////////////////////////////////////////////////////////
@@ -79,6 +79,7 @@ public:
   virtual Expression add(const Expression&) const;
   virtual Expression mul(const Expression&) const;
   virtual Expression composite(const Expression&) const = 0;
+  virtual bool equals(const Expression&) const;
   virtual Expression diff() const = 0;
   virtual std::string toString() const = 0;
 
@@ -119,6 +120,7 @@ public:
   Expression add(const Expression&) const final;
   Expression mul(const Expression&) const final;
   Expression composite(const Expression&) const final;
+  bool equals(const Expression&) const final;
   Expression diff() const final;
   std::string toString() const final;
 
@@ -187,6 +189,18 @@ inline Expression&
 Expression::operator /=(const Expression& e)
 {
   return *this = *this / e;
+}
+
+inline bool
+Expression::operator ==(const Expression& e) const
+{
+  return _body->equals(e);
+}
+
+inline bool
+Expression::operator !=(const Expression& e) const
+{
+  return !operator ==(e);
 }
 
 inline bool

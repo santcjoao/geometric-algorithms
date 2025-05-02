@@ -66,6 +66,41 @@ NullExpression::toString() const
 
 //////////////////////////////////////////////////////////
 //
+// Term class
+// ====
+class Term final: public Expression::Body
+{
+public:
+  const float n; // exponent
+  const float a; // coefficient
+
+  static Expression New(float n, float a)
+  {
+    return n == 0 || a == 0 ? a : Expression{*new Term{n, a}};
+  }
+
+  float eval(float) const final;
+  Expression add(const Expression&) const final;
+  Expression mul(const Expression&) const final;
+  Expression composite(const Expression&) const final;
+  bool equals(const Expression&) const final;
+  Expression diff() const final;
+  std::string toString() const final;
+
+private:
+  Term(float n, float a):
+    n{n},
+    a{a}
+  {
+    assert(n != 0);
+    assert(a != 0);
+  }
+
+}; // Term
+
+
+//////////////////////////////////////////////////////////
+//
 // BinaryExpression class
 // ================
 struct BinaryExpression: Expression::Body
@@ -109,6 +144,7 @@ struct AddExpression: BinaryExpression
   Expression add(const Expression&) const override;
   Expression mul(const Expression&) const override;
   Expression composite(const Expression&) const override;
+  bool equals(const Expression&) const override;
   Expression diff() const override;
 
 }; // AddExpression
@@ -150,17 +186,21 @@ AddExpression::mul(const Expression& e) const
     Expression r = *this;
     return r * a->e1 + r * a->e2;
   }
-
-  auto r1 = body(e1)->mul(e);
-  auto r2 = body(e2)->mul(e);
-
-  return r1 + r2;
+  return e1 * e + e2 * e;
 }
 
 Expression
 AddExpression::composite(const Expression& e) const
 {
   return e1.composite(e) + e2.composite(e);
+}
+
+bool
+AddExpression::equals(const Expression& e) const
+{
+  if (auto a = Body::as<AddExpression>(e))
+    return e1 == a->e1 && e2 == a->e2 || e1 == a->e2 && e2 == a->e1;
+  return false;
 }
 
 Expression
@@ -185,6 +225,7 @@ struct MulExpression: BinaryExpression
   float eval(float) const override;
   Expression mul(const Expression&) const override;
   Expression composite(const Expression&) const override;
+  bool equals(const Expression&) const override;
   Expression diff() const override;
 
 }; // MulExpression
@@ -224,6 +265,14 @@ MulExpression::composite(const Expression& e) const
   return e1.composite(e) * e2.composite(e);
 }
 
+bool
+MulExpression::equals(const Expression& e) const
+{
+  if (auto a = Body::as<MulExpression>(e))
+    return e1 == a->e1 && e2 == a->e2 || e1 == a->e2 && e2 == a->e1;
+  return false;
+}
+
 Expression
 MulExpression::diff() const
 {
@@ -233,31 +282,185 @@ MulExpression::diff() const
 
 //////////////////////////////////////////////////////////
 //
-// Term class
-// ====
-class Term final: public Expression::Body
+// NativeFunction class
+// ==============
+class NativeFunction
 {
 public:
-  const float n; // exponent
-  const float a; // coefficient
+  virtual float eval(float) const  = 0;
+  virtual Expression diff(const Expression&) const  = 0;
+  virtual std::string toString() const = 0;
 
-  Term(float n, float a):
-    n{n},
-    a{a}
-  {
-    assert(n != 0);
-    assert(a != 0);
-  }
+  static const NativeFunction& exp();
+
+private:
+  class Exp;
+
+}; // NativeFunction
+
+
+//////////////////////////////////////////////////////////
+//
+// Function class
+// ========
+class Function final: public Expression::Body
+{
+public:
+  const float a; // coefficient
 
   float eval(float) const final;
   Expression add(const Expression&) const final;
   Expression mul(const Expression&) const final;
   Expression composite(const Expression&) const final;
+  bool equals(const Expression&) const final;
   Expression diff() const final;
   std::string toString() const final;
 
-}; // Term
+  static Expression New(const NativeFunction&, const Expression&);
+  static Expression New(const Function&, float = 1);
 
+private:
+  const NativeFunction& function;
+  Expression argument;
+
+  Function(const NativeFunction& f, const Expression& a, float c):
+    function{f},
+    argument{a},
+    a{c}
+  {
+    assert(a != 0);
+  }
+
+  auto sameBase(const Function* f) const
+  {
+    return &function == &f->function && argument == f->argument;
+  }
+
+}; // Function
+
+Expression
+Function::New(const NativeFunction& f, const Expression& a)
+{
+  if (auto c = as<Constant>(a))
+    return f.eval(c->value);
+  return *new Function{f, a, 1};
+}
+
+Expression
+Function::New(const Function& f, float c)
+{
+  return c != 0 ? *new Function{f.function, f.argument, c} : Expression{0};
+}
+
+float
+Function::eval(float x) const
+{
+  return function.eval(argument.eval(x)) * a;
+}
+
+Expression
+Function::add(const Expression& e) const
+{
+  if (auto a = as<AddExpression>(e))
+    return a->add(*this);
+  if (auto f = as<Function>(e); f && sameBase(f))
+    return New(*this, a + f->a);
+  return Expression{};
+}
+
+Expression
+Function::mul(const Expression& e) const
+{
+  if (auto c = as<Constant>(e))
+    return New(*this, c->value * a);
+  if (auto a = as<AddExpression>(e))
+    return a->mul(*this);
+  if (auto m = as<MulExpression>(e))
+    return m->mul(*this);
+  if (auto f = as<Function>(e); f && sameBase(f))
+  {
+    // TODO
+  }
+  return Expression{};
+}
+
+Expression
+Function::composite(const Expression& e) const
+{
+  return New(function, argument.composite(e)) * a;
+}
+
+bool
+Function::equals(const Expression& e) const
+{
+  if (auto f = as<Function>(e))
+    return a == f->a && sameBase(f);
+  return false;
+}
+
+Expression
+Function::diff() const
+{
+  auto da = argument.diff();
+
+  if (auto c = as<Constant>(da))
+    if (c->value == 0)
+      return 0;
+  return function.diff(argument) * da * a;
+}
+
+std::string
+Function::toString() const
+{
+  auto s = std::format("{}({})", function.toString(), argument.toString());
+
+  return a == 1 ? s : a == -1 ? std::format("-{}", s) :
+    format("{}*{}", a, s);
+}
+
+
+//////////////////////////////////////////////////////////
+//
+// NativeFunction::Exp class
+// ===================
+class NativeFunction::Exp final: public NativeFunction
+{
+  float eval(float) const final;
+  Expression diff(const Expression&) const final;
+  std::string toString() const final;
+
+}; // NativeFunction::Exp
+
+float
+NativeFunction::Exp::eval(float x) const
+{
+  return std::exp(x);
+}
+
+Expression
+NativeFunction::Exp::diff(const Expression& a) const
+{
+  return Function::New(exp(), a);
+}
+
+std::string
+NativeFunction::Exp::toString() const
+{
+  return "exp";
+}
+
+const NativeFunction&
+NativeFunction::exp()
+{
+  static const Exp exp;
+  return exp;
+}
+
+
+//////////////////////////////////////////////////////////
+//
+// Term implementation
+// ====
 float
 Term::eval(float x) const
 {
@@ -271,7 +474,7 @@ Term::add(const Expression& e) const
 {
   if (auto t = as<Term>(e))
     if (n == t->n)
-      return Expression::term(n, a + t->a);
+      return New(n, a + t->a);
   if (auto a = as<AddExpression>(e))
     return a->add(*this);
   return Expression{};
@@ -281,9 +484,9 @@ Expression
 Term::mul(const Expression& e) const
 {
   if (auto c = as<Constant>(e))
-    return Expression::term(n, c->value * a);
+    return New(n, c->value * a);
   if (auto t = as<Term>(e))
-    return Expression::term(n + t->n, a * t->a);
+    return New(n + t->n, a * t->a);
   if (auto a = as<AddExpression>(e))
     return a->mul(*this);
   if (auto m = as<MulExpression>(e))
@@ -297,25 +500,37 @@ Term::composite(const Expression& e) const
   if (auto c = as<Constant>(e))
     return Term::eval(c->value);
   if (auto t = as<Term>(e))
-    return Expression::term(n * t->n, a * t->a);
+    return New(n * t->n, a * t->a);
   return e.pow(n) * a;
+}
+
+bool
+Term::equals(const Expression& e) const
+{
+  if (auto t = Body::as<Term>(e))
+    return n == t->n && a == t->a;
+  return false;
 }
 
 Expression
 Term::diff() const
 {
-  return n == 1 ? a : Expression::term(n - 1, a * n);
+  return n == 1 ? a : New(n - 1, a * n);
 }
 
 std::string
 Term::toString() const
 {
   auto a1 = a == 1;
-  auto n1 = n == 1;
 
-  return a1 && n1 ? "x" :
-    a1 ? std::format("x^{}", n) : n1 ? std::format("{}x", a) :
-    std::format("{}x^{}", a, n);
+  if (n == 1)
+    return a1 ? "x" : a == -1 ? "-x" :
+      std::format("{}x", a);
+
+  auto s = std::format("x^{}", n);
+
+  return a1 ? s : a == -1 ? std::format("-{}", s) :
+    std::format("{}{}", a, s);
 }
 
 
@@ -345,11 +560,13 @@ Constant::mul(const Expression& e) const
   if (auto c = as<Constant>(e))
     return value * c->value;
   if (auto t = as<Term>(e))
-    return Expression::term(t->n, value * t->a);
+    return Term::New(t->n, value * t->a);
   if (auto a = as<AddExpression>(e))
     return a->mul(*this);
   if (auto m = as<MulExpression>(e))
     return m->mul(*this);
+  if (auto f = as<Function>(e))
+    return Function::New(*f, value * f->a);
   return Expression{};
 }
 
@@ -357,6 +574,14 @@ Expression
 Constant::composite(const Expression&) const
 {
   return *this;
+}
+
+bool
+Constant::equals(const Expression& e) const
+{
+  if (auto c = Body::as<Constant>(e))
+    return value == c->value;
+  return false;
 }
 
 Expression
@@ -388,6 +613,13 @@ Expression::Body::mul(const Expression&) const
   return Expression{};
 }
 
+bool
+Expression::Body::equals(const Expression& e) const
+{
+  return this == body(e);
+
+}
+
 
 //////////////////////////////////////////////////////////
 //
@@ -415,7 +647,7 @@ Expression
 Expression::operator -(const Expression& e) const
 {
   // TODO
-  return Expression{};
+  return {};
 }
 
 Expression
@@ -444,35 +676,40 @@ Expression
 Expression::operator /(const Expression& e) const
 {
   // TODO
-  return Expression{};
+  return {};
 }
 
 Expression
 Expression::operator -() const
 {
   // TODO
-  return Expression{};
+  return {};
 }
 
 Expression
 Expression::pow(const Expression& e) const
 {
   // TODO
-  return Expression{};
+  return {};
 }
-
-Expression
-Expression::term(float n, float a)
-{
-  return n == 0 || a == 0 ? a : Expression{*new Term{n, a}};
-}
-
 
 const Expression::Body&
 Expression::null()
 {
   static const NullExpression null;
   return null;
+}
+
+Expression
+Expression::exp(const Expression& argument)
+{
+  return Function::New(NativeFunction::exp(), argument);
+}
+
+Expression
+x(float exponent, float coefficient)
+{
+  return Term::New(exponent, coefficient);
 }
 
 } // end namespace tcii::dcalc
