@@ -52,7 +52,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile />
@@ -85,12 +85,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\tests\DflOpTest.h" />
     <ClInclude Include="..\..\tests\FuncTest.h" />
     <ClInclude Include="..\..\tests\InitTest.h" />
     <ClInclude Include="..\..\tests\ListTest.h" />
+    <ClInclude Include="..\..\tests\math\Matrix.h" />
+    <ClInclude Include="..\..\tests\math\Vector.h" />
+    <ClInclude Include="..\..\tests\MatrixTest.h" />
+    <ClInclude Include="..\..\tests\RefTest.h" />
     <ClInclude Include="..\..\tests\TypeTest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\util\Exception.cpp" />
     <ClCompile Include="..\..\tests\Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

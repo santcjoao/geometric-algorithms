@@ -4,7 +4,7 @@
 #include <cstdio>
 
 namespace tcii::tests
-{ // begin namesapce tcii::tests
+{ // begin namespace tcii::tests
 
 template <typename S>
 inline void
@@ -132,7 +132,7 @@ struct D4: D3, S4
 
 }; // D4
 
-} // end namesapce tcii::tests
+} // end namespace tcii::tests
 
 inline void
 initTest()

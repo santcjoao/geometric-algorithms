@@ -83,7 +83,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dcalc\Expression.h" />
-    <ClInclude Include="..\..\include\util\Exception.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\dcalc\Expression.cpp" />

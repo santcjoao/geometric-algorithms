@@ -4,7 +4,7 @@
 #include <string>
 
 namespace tcii::tests
-{ // begin namesapce tcii::tests
+{ // begin namespace tcii::tests
 
 // A function base template
 template <typename T>
@@ -66,7 +66,7 @@ cfat(int n) -> decltype(n)
 template <typename T>
 constexpr auto pi = static_cast<T>(3.14159);
 
-} // end namesapce tcii::tests
+} // end namespace tcii::tests
 
 inline void
 funcTest()
