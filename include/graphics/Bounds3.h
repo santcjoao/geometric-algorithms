@@ -6,15 +6,23 @@
 namespace tcii::cg
 { // begin namespace tcii::cg
 
+template <size_t D, typename real> class Bounds;
+
 template <typename real>
-class Bounds3
+class Bounds<3, real>
 {
 public:
   using vec3 = Vec3<real>;
 
-  Bounds3()
+  Bounds()
   {
     setEmpty();
+  }
+
+  auto& operator [](size_t i) const
+  {
+    assert(i >= 0 && i < 2);
+    return (&_p1)[i];
   }
 
   auto& min() const
@@ -60,7 +68,7 @@ public:
       _p2.z = p.z;
   }
 
-  void inflate(const Bounds3& bounds)
+  void inflate(const Bounds& bounds)
   {
     inflate(bounds._p1);
     inflate(bounds._p2);
@@ -71,6 +79,8 @@ private:
   vec3 _p2;
 
 }; // Bounds3
+
+template <typename real> using Bounds3 = Bounds<3, real>;
 
 template <typename real>
 std::ostream&

@@ -1,6 +1,7 @@
 #ifndef __Vec3_h
 #define __Vec3_h
 
+#include <cassert>
 #include <cmath>
 #include <iostream>
 
@@ -9,19 +10,35 @@ namespace tcii::cg
 
 #define ASSERT_REAL(T, msg) static_assert(std::floating_point<T>, msg)
 
+template <size_t D, typename real> struct Vec;
+
 template <typename real>
-struct Vec3
+struct Vec<3, real>
 {
   ASSERT_REAL(real, "Vec3: floating-point type expected");
+
+  using value_type = real;
 
   real x;
   real y;
   real z;
 
+  auto& operator [](size_t i)
+  {
+    assert(i >= 0 && i < 3);
+    return (&x)[i];
+  }
+
   real length() const;
-  Vec3 versor() const;
+
+  auto versor() const
+  {
+    return ((real)1 / length()) * *this;
+  }
 
 }; // Vec3
+
+template <typename real> using Vec3 = Vec<3, real>;
 
 template <typename real>
 inline Vec3<real>
@@ -53,16 +70,9 @@ operator *(const Vec3<real>& v, real s)
 
 template <typename real>
 inline real
-Vec3<real>::length() const
+Vec<3, real>::length() const
 {
   return std::sqrt(x * x + y * y + z * z);
-}
-
-template <typename real>
-inline Vec3<real>
-Vec3<real>::versor() const
-{
-  return ((real)1 / length()) * *this;
 }
 
 template <typename T>
