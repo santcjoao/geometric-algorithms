@@ -29,6 +29,11 @@ struct Vec<3, real>
     return (&x)[i];
   }
 
+  auto operator [](size_t i) const
+  {
+    return const_cast<Vec*>(this)->operator [](i);
+  }
+
   real length() const;
 
   auto versor() const

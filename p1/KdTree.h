@@ -1,8 +1,7 @@
 #ifndef __KdTree_h
 #define __KdTree_h
 
-#include "graphics/Bounds3.h"
-#include <concepts>
+#include "Utils.h"
 #include <utility>
 
 namespace tcii::p1
@@ -10,60 +9,13 @@ namespace tcii::p1
 
 using namespace cg;
 
-template <typename T, typename U>
-concept SameAs = std::same_as<T, U>;
-
-template <typename R>
-concept IsReal = std::is_floating_point_v<R>;
-
-template <typename C, typename E>
-concept IsIndexable = requires (C x, size_t i)
-{
-  { x[i] } -> std::convertible_to<E>;
-};
-
-template <template <size_t, typename> typename P, typename R, size_t D>
-concept IsPoint = IsReal<R> &&
-  SameAs<R, typename P<D, R>::value_type> &&
-  IsIndexable<P<D, R>, R> &&
-requires (P<D, R> p, R r)
-{
-  { p + p } -> SameAs<P<D, R>>;
-  { p - p } -> SameAs<P<D, R>>;
-  { p * r } -> SameAs<P<D, R>>;
-  { r * p } -> SameAs<P<D, R>>;
-};
-
-template <typename PA,
-  template <size_t, typename> typename P,
-  typename R,
-  size_t D>
-concept IsPointArray = IsPoint<P, R, D> &&
-  IsIndexable<PA, P<D, R>> &&
-  std::move_constructible<PA> &&
-requires (PA a, size_t i)
-{
-  { a.size() } -> SameAs<size_t>;
-};
-
-template <size_t D, typename real, IsPointArray<Vec, real, D> PA>
-auto
-computeBounds(const PA& points)
-{
-  Bounds<D, real> b;
-
-  for (size_t n = points.size(), i = 0; i < n;)
-    b.inflate(points[i++]);
-  return b;
-}
-
-template <size_t D, typename real, IsPointArray<Vec, real, D> PA>
+template <size_t D, IsReal R, IsPointArray<Vec, R, D> A>
 class PointHolder
 {
 public:
-  using Point = Vec<D, real>;
+  using Point = Vec<D, R>;
 
-  PointHolder(PA&& points):
+  PointHolder(A&& points):
     _points{std::move(points)}
   {
     // do nothing
@@ -75,22 +27,22 @@ public:
   }
 
 private:
-  PA _points;
+  A _points;
 
 }; // PointHolder
 
-template <size_t D, typename real, typename PA>
-class KdTree: public PointHolder<D, real, PA>
+template <size_t D, typename R, typename A>
+class KdTree: public PointHolder<D, R, A>
 {
 public:
-  using Base = PointHolder<D, real, PA>;
-  using Bounds = cg::Bounds<D, real>;
+  using Base = PointHolder<D, R, A>;
+  using Bounds = cg::Bounds<D, R>;
 
   const struct Params
   {
-    size_t maxPointsPerNode;
-    size_t minPointsPerNode;
-    size_t maxDepth;
+    unsigned maxPointsPerNode;
+    unsigned minPointsPerNode;
+    unsigned maxDepth;
 
   } params;
 
@@ -99,7 +51,7 @@ public:
     return {20, 5, 8};
   }
 
-  KdTree(PA&& points, const Params& params = dflParams());
+  KdTree(A&& points, const Params& params = dflParams());
 
   KdTree(const KdTree&) = delete;
   KdTree& operator =(const KdTree&) = delete;
@@ -118,6 +70,11 @@ public:
     delete _root;
   }
 
+  auto& bounds() const
+  {
+    return _root->bounds;
+  }
+
   auto nodeCount() const
   {
     return _nodeCount;
@@ -131,7 +88,10 @@ public:
 private:
   struct Node
   {
-    Node(const Bounds& bounds)
+    Bounds bounds;
+
+    Node(const Bounds& bounds, unsigned depth):
+      bounds{bounds}
     {
       // TODO
     }
@@ -144,16 +104,17 @@ private:
 
 }; // KdTree
 
-template <size_t D, typename real, typename PA>
-KdTree<D, real, PA>::KdTree(PA&& points, const Params& params):
+template <size_t D, typename R, typename A>
+KdTree<D, R, A>::KdTree(A&& points, const Params& params):
   Base{std::move(points)},
   params{params}
 {
-  _root = new Node{computeBounds<D, real>(this->points())};
+  _root = new Node{computeBounds<D, R>(this->points()), 0};
+  _nodeCount = _leafCount = 1;
   // TODO
 }
 
-template <typename real, typename PA> using KdTree3 = KdTree<3, real, PA>;
+template <typename R, typename A> using KdTree3 = KdTree<3, R, A>;
 
 } // end namespace tcii::p1
 
