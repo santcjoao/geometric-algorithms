@@ -71,7 +71,7 @@ public:
     return _points;
   }
 
-protected:
+private:
   PA _points;
 
 }; // PointHolder
@@ -97,8 +97,25 @@ public:
 
   KdTree(PA&& points, const Params& params = dflParams());
 
+  KdTree(const KdTree&) = delete;
+  KdTree& operator =(const KdTree&) = delete;
+
+  ~KdTree()
+  {
+    delete _root;
+  }
+
 private:
-  struct Node;
+  struct Node
+  {
+    Node(const Bounds<D, real>& bounds)
+    {
+      // TODO
+    }
+
+  }; // Node
+
+  Node* _root{};
 
 }; // KdTree
 
@@ -107,6 +124,7 @@ KdTree<D, real, PA>::KdTree(PA&& points, const Params& params):
   Base{std::move(points)},
   params{params}
 {
+  _root = new Node{computeBounds<D, real>(this->points())};
   // TODO
 }
 
