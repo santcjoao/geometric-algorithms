@@ -112,18 +112,19 @@ private:
 } // end namespace tcii::tests
 
 /*
-The expression test::X{"C++"} is an rvalue. (Indeed, the expression
+Considering the class X in the namespace tcii::tests and the code
+below, the expression X{"C++"} is an rvalue. (Indeed, the expression
 results in a temporary object: attempting to get the address of such
-an object, ie, &test::X{"C++"}, causes a compilation error.)
-Therefore, it is not correct to write:
+an object, i.e., &X{"C++"}, causes a compilation error.) Therefore,
+it is not correct to write:
 
-test::X& r1 = test::X{"C++"}; // ERROR (1)
+X& r1 = X{"C++"}; // ERROR (1)
 
 (Since r1 is an lvalue reference, it can only be initialized with an
 lvalue.) However, it is valid to initialize a *const* lvalue
 reference with an rvalue:
 
-const test::X& r2 = test::X{"C++"}; // (2)
+const X& r2 = X{"C++"}; // (2)
 const int& r3 = 3; // (3)
 
 In declaration (3), the compiler creates a temporary object to keep
@@ -132,7 +133,7 @@ The lifetime of the temporary is defined by the scope of r3.
 
 Of course, an rvalue reference can be initialized with an rvalue:
 
-test::X&& r4 = test::X{"C++"}; // (4)
+X&& r4 = X{"C++"}; // (4)
 std::string&& r5 = "C++"; // (5)
 
 By using r4 (but not r2), it is possible to modify the temporary:
@@ -148,32 +149,32 @@ r4: "C99_2"
 
 Also, an rvalue can be used as initializer of an object:
 
-test::X x1 = test::X{"C++"}; // (6)
-test::X x2 = "C99"; // (7)
+X x1 = X{"C++"}; // (6)
+X x2 = "C99"; // (7)
 
-Declaration (6) statically creates an object of the type test::X
-named x1. (Only the first constructor declared in the class test::X
-is invoked here. There is no copying since the code generated for the
-constructor operates directly on the object x1). The expression x1 is
-clearly an lvalue (we can get its address, ie, &x1). Therefore, we
-can not declare:
+Declaration (6) statically creates an object of the type X named x1.
+(Only the first constructor declared in the class X in invoked here.
+There is no copying since the code generated for the constructor
+operates directly on the object x1). The expression x1 is clearly an
+lvalue (we can get its address, ie, &x1). Therefore, we can not
+declare:
 
-test::X&& r6 = x1; // ERROR (8)
+X&& r6 = x1; // ERROR (8)
 
 However, it is correct to write:
 
 auto&& r7 = x1; // OK: r7 is an lvalue reference (9)
-test::X& r8 = r7; // (10)
+X& r8 = r7; // (10)
 auto x3 = r8; // (11)
-test::X&& r9 = static_cast<test::X&&>(r8); // (12)
+X&& r9 = static_cast<X&&>(r8); // (12)
 auto x4 = std::move(r8); // (13)
 
 (We will discuss the type deductions in declarations (9) and (13)
 later.) Declaration (11) statically creates an object of the type
-test::X named x3 as a copy of the object referenced by r8 (ie, x1).
+X named x3 as a copy of the object referenced by r8 (i.e., x1).
 Declaration (12) initializes an rvalue reference with the rvalue
-resulting from a cast expression. Note that r8 is an lvalue, but the
-cast expression is an rvalue (more specifically, a xvalue, or
+resulting from a cast expression. Note that r8 is an lvalue, but
+the cast expression is an rvalue (more specifically, a xvalue, or
 "expiring" value). Thus, even an object with identity (x1, in this
 case) can be considered "temporary" and used to initialize an rvalue
 reference. The std::move function does exactly this cast.
@@ -197,18 +198,18 @@ r8 = std::move(r7); // (20)
 r9 = r2 + X{"20"}; // (21)
 
 Remember that assigning a value, x, to a reference, r, does not
-change the reference itself, but the object to which the reference is
-bound. Also, if x is an lvalue, then it is *copied* to r (more
+change the reference itself, but the object to which the reference
+is bound. Also, if x is an lvalue, then it is *copied* to r (more
 specifically, copied to the object which r is bound); otherwise, if
 it is an rvalue, then it is *moved* to r (ie, the object which r is
 bound). Thus, in expressions (14)-(17) and (19), the assignment
 invokes the copy operator (which takes as parameter a const lvalue
 reference), and in expressions (18) and (20)-(21), the move operator
-(which takes as parameter an rvalue reference, ie, a reference for a
-temporary). (Attempting to use r8 after expression (20) should cause
-a compiler warning (at least) since x1 has been moved, ie, it is
-supposed that its properties have been "stolen" by other object,
-although the state of the object is still valid.)
+(which takes as parameter an rvalue reference, i.e., a reference for
+a temporary). (Attempting to use r8 after expression (20) should
+cause a compiler warning (at least) since x1 has been moved, i.e.,
+it is supposed that its properties have been "stolen" by other
+object, although the state of the object is still valid.)
 */
 
 namespace tcii::tests
@@ -299,7 +300,7 @@ void refTest()
     puts("\n**MORE");
     X s1{"s1"};
     vcat("s1", s1);
-    //test::X&& x = s1;
+    //X&& x = s1;
     //vcat("x", x);
     const X s2{"s2"};
     vcat("s2", s2);
@@ -325,8 +326,8 @@ void refTest()
 }
 
 /*
-Exercise: what happens if the class test::X does not declare copy and
-move constructors and/or copy and move operators?
+Exercise: what happens if the class tcii::tests::X does not declare
+copy and move constructors and/or copy and move operators?
 */
 
 #endif // __RefTest_h
