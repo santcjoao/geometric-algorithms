@@ -3,6 +3,7 @@
 
 #include "graphics/Bounds3.h"
 #include <concepts>
+#include <utility>
 
 namespace tcii::p1
 { // begin namespace tcii::p1
@@ -60,6 +61,8 @@ template <size_t D, typename real, IsPointArray<Vec, real, D> PA>
 class PointHolder
 {
 public:
+  using Point = Vec<D, real>;
+
   PointHolder(PA&& points):
     _points{std::move(points)}
   {
@@ -81,6 +84,7 @@ class KdTree: public PointHolder<D, real, PA>
 {
 public:
   using Base = PointHolder<D, real, PA>;
+  using Bounds = cg::Bounds<D, real>;
 
   const struct Params
   {
@@ -100,15 +104,34 @@ public:
   KdTree(const KdTree&) = delete;
   KdTree& operator =(const KdTree&) = delete;
 
+  KdTree(KdTree&& tree) noexcept:
+    _root{std::exchange(tree._root, nullptr)},
+    _nodeCount{tree._nodeCount},
+    _leafCount{tree._leafCount},
+    params{tree.params}
+  {
+    // do nothing
+  }
+
   ~KdTree()
   {
     delete _root;
   }
 
+  auto nodeCount() const
+  {
+    return _nodeCount;
+  }
+
+  auto leafCount() const
+  {
+    return _leafCount;
+  }
+
 private:
   struct Node
   {
-    Node(const Bounds<D, real>& bounds)
+    Node(const Bounds& bounds)
     {
       // TODO
     }
@@ -116,6 +139,8 @@ private:
   }; // Node
 
   Node* _root{};
+  unsigned _nodeCount{};
+  unsigned _leafCount{};
 
 }; // KdTree
 
