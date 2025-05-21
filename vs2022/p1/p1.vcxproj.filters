@@ -26,6 +26,9 @@
     <ClInclude Include="..\..\p1\Concepts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\p1\KNN.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\p1\Main.cpp">

@@ -1,7 +1,9 @@
 #ifndef __KdTree_h
 #define __KdTree_h
 
+#include "KNN.h"
 #include "Utils.h"
+#include <functional>
 #include <utility>
 
 namespace tcii::p1
@@ -37,6 +39,9 @@ class KdTree: public PointHolder<D, R, A>
 public:
   using Base = PointHolder<D, R, A>;
   using Bounds = cg::Bounds<D, R>;
+  using Point = typename Base::Point;
+  using PointFunc = std::function<bool(const A&, unsigned)>;
+  using KNN = p1::KNN<R>;
 
   const struct Params
   {
@@ -85,6 +90,30 @@ public:
     return _leafCount;
   }
 
+  KNN findNeighbors(const Point& point,
+    unsigned k,
+    PointFunc filter = {}) const;
+
+  auto findNeighbors(unsigned index, unsigned k, PointFunc filter = {}) const
+  {
+    assert(index < this->points().size());
+    return findNeighbors(this->points()[index], k, filter);
+  }
+
+  void forEachNeighbor(const Point& point,
+    R radius,
+    PointFunc f,
+    PointFunc filter = {}) const;
+
+  void forEachNeighbor(unsigned index,
+    R radius,
+    PointFunc f,
+    PointFunc filter = {}) const
+  {
+    assert(index < this->points().size());
+    forEachNeighbor(this->points()[index], radius, f, filter);
+  }
+
 private:
   struct Node
   {
@@ -111,6 +140,29 @@ KdTree<D, R, A>::KdTree(A&& points, const Params& params):
 {
   _root = new Node{computeBounds<D, R>(this->points()), 0};
   _nodeCount = _leafCount = 1;
+  // TODO
+}
+
+template <size_t D, typename R, typename A>
+auto
+KdTree<D, R, A>::findNeighbors(const Point& point,
+  unsigned k,
+  PointFunc filter) const -> KNN
+{
+  KNN knn{k};
+
+  // TODO
+  return knn;
+}
+
+template <size_t D, typename R, typename A>
+void
+KdTree<D, R, A>::forEachNeighbor(const Point& point,
+  R radius,
+  PointFunc f,
+  PointFunc filter) const
+{
+  f(this->points(), 0);
   // TODO
 }
 

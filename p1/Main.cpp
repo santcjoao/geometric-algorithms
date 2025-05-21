@@ -22,9 +22,17 @@ main()
 
   R d{};
 
-  for (size_t i = 0; i < np; ++i)
+  for (unsigned i = 0; i < np; ++i)
     d += distance(points[i], bounds);
   std::cout << "Distance sum: " << d << '\n';
+  (void)tree.findNeighbors(0, 10);
+  tree.forEachNeighbor(0,
+    0.5f,
+    [](const A& points, unsigned index)
+    {
+      std::cout << points[index] << '\n';
+      return true;
+    });
   puts("Press any key to exit...");
   (void)getchar();
   return 0;

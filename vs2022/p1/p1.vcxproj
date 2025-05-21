@@ -80,6 +80,7 @@
     <ClInclude Include="..\..\include\graphics\Vec3.h" />
     <ClInclude Include="..\..\p1\Concepts.h" />
     <ClInclude Include="..\..\p1\KdTree.h" />
+    <ClInclude Include="..\..\p1\KNN.h" />
     <ClInclude Include="..\..\p1\Utils.h" />
   </ItemGroup>
   <ItemGroup>

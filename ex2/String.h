@@ -1,6 +1,10 @@
 #ifndef __String_h
 #define __String_h
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif // _MSC_VER
+
 #include <cassert>
 #include <string>
 
