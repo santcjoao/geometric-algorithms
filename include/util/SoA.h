@@ -241,7 +241,6 @@ public:
     return this->_soa->template get<I>(this->_index);
   }
 
-  HOST DEVICE
   void set(const Args&... args)
   {
     return this->_soa->set(this->_index, args...);
