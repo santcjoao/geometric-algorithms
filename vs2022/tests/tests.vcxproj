@@ -94,6 +94,7 @@
     <ClInclude Include="..\..\tests\MatrixTest.h" />
     <ClInclude Include="..\..\tests\RefTest.h" />
     <ClInclude Include="..\..\tests\TypeTest.h" />
+    <ClInclude Include="..\..\tests\VariadicTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\util\Exception.cpp" />

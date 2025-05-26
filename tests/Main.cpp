@@ -5,6 +5,7 @@
 #include "MatrixTest.h"
 #include "RefTest.h"
 #include "TypeTest.h"
+#include "VariadicTest.h"
 
 int
 main()
@@ -33,7 +34,7 @@ main()
           vectorTest();
         }
     },
-    {"Variadic templates", '8', nullptr},
+    {"Variadic templates", '8', variadicTest},
     {"Lambda/Fold expression", '9', nullptr},
     {"Concepts test", 'c', nullptr}
   };
