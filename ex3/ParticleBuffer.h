@@ -28,6 +28,16 @@ public:
     return 0u;
   }
 
+  void add(const Vec3f& p, const Fields&... fields)
+  {
+    // TODO
+  }
+
+  void clear()
+  {
+    // TODO
+  }
+
   Bounds3f bounds() const;
   void render(Renderer&) const;
 
