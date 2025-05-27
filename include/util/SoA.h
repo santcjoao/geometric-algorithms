@@ -393,7 +393,7 @@ public:
   SoA(const type&) = delete;
   type& operator =(const type&) = delete;
 
-  SoA(type&& other)
+  SoA(type&& other) noexcept
   {
     this->_size = other._size;
     this->_arrays = other._arrays;
