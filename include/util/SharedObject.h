@@ -20,13 +20,6 @@ isSharedObject()
 
 #define ASSERT_SHARED(T, msg) static_assert(isSharedObject<T>(), msg)
 
-template <typename T>
-inline void
-destroy(T* ptr)
-{
-  delete ptr;
-}
-
 class SharedObject
 {
 public:
@@ -59,6 +52,12 @@ private:
 
 }; // SharedObject
 
+inline void
+destroy(SharedObject* ptr)
+{
+  delete ptr;
+}
+
 template <typename T>
 class ObjectPtr
 {
@@ -73,10 +72,10 @@ public:
     // do nothing
   }
 
-  ObjectPtr(pointer&& other):
-    _ptr{other._ptr}
+  ObjectPtr(pointer&& other) noexcept:
+    _ptr{T::makeUse(other._ptr)}
   {
-    other._ptr = nullptr;
+    // do nothing
   }
 
   ObjectPtr(const T* ptr):
@@ -95,10 +94,9 @@ public:
     return operator =(other._ptr);
   }
 
-  auto& operator =(pointer&& other)
+  auto& operator =(pointer&& other) noexcept
   {
-    std::swap(_ptr, other._ptr);
-    return *this;
+    return operator =(other._ptr);
   }
 
   auto& operator =(const T* ptr)
