@@ -31,11 +31,19 @@ public:
   void add(const Vec3f& p, const Fields&... fields)
   {
     // TODO
+    ++_particleCount;
   }
 
   void clear()
   {
     // TODO
+  }
+
+  auto& position(unsigned i) const
+  {
+    // TODO
+    static Vec3f _dummy;
+    return _dummy;
   }
 
   Bounds3f bounds() const;
