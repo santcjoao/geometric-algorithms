@@ -11,21 +11,6 @@
 namespace tcii::tests
 { // begin namespace tcii::tests
 
-template <bool B, typename T = void>
-struct enable_if
-{
-  // empty
-};
-
-template <typename T>
-struct enable_if<true, T>
-{
-  using type = T;
-};
-
-template <bool B, typename T = void>
-using enable_if_t = typename enable_if<B, T>::type;
-
 namespace std_14
 { // begin namespace std_14
 
@@ -108,6 +93,24 @@ struct tuple<T, Ts...>: tuple<Ts...>
   }
 };
 
+namespace std_11
+{ // begin namespace std_11
+
+template <bool B, typename T = void>
+struct enable_if
+{
+  // empty
+};
+
+template <typename T>
+struct enable_if<true, T>
+{
+  using type = T;
+};
+
+template <bool B, typename T = void>
+using enable_if_t = typename enable_if<B, T>::type;
+
 template <size_t, typename> struct _tet; // tuple element type
 
 template <typename T, typename... Ts>
@@ -123,18 +126,33 @@ struct _tet<I, tuple<T, Ts...>>
 };
 
 template <size_t I, typename... Ts>
-enable_if_t<I == 0, typename _tet<0, tuple<Ts...>>::type&>
+inline enable_if_t<I == 0, typename _tet<0, tuple<Ts...>>::type&>
 get(tuple<Ts...>& t)
 {
   return t.value;
 }
 
 template <size_t I, typename T, typename... Ts>
-enable_if_t<I != 0, typename _tet<I, tuple<T, Ts...>>::type&>
+inline enable_if_t<I != 0, typename _tet<I, tuple<T, Ts...>>::type&>
 get(tuple<T, Ts...>& t)
 {
   tuple<Ts...>& base{t};
   return get<I - 1>(base);
+}
+
+} // end namespace std_11
+
+template <size_t I, typename T, typename... Ts>
+inline auto&
+get(tuple<T, Ts...>& t)
+{
+  if constexpr (I == 0)
+    return t.value;
+  else
+  {
+    tuple<Ts...>& base{t};
+    return get<I - 1>(base);
+  }
 }
 
 } // end namespace tcii::tests
