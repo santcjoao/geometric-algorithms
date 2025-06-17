@@ -55,9 +55,14 @@ public:
 
     ~Data()
     {
-      delete []_vertices;
-      delete []_vertexNormals;
-      delete []_triangles;
+      delete[]_vertices;
+      delete[]_vertexNormals;
+      delete[]_triangles;
+    }
+
+    auto vertexCount() const
+    {
+      return _vertexSize;
     }
 
     auto& vertex(index_t i)
@@ -90,6 +95,11 @@ public:
     Vec3Array vertexNormals() const
     {
       return {_vertexNormals, _vertexSize};
+    }
+
+    auto triangleCount() const
+    {
+      return _triangleSize;
     }
 
     auto& triangle(index_t i)
