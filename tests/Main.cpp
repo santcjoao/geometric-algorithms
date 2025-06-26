@@ -1,6 +1,7 @@
 #include "DflOpTest.h"
 #include "FuncTest.h"
 #include "InitTest.h"
+#include "lambdaTest.h"
 #include "ListTest.h"
 #include "MatrixTest.h"
 #include "RefTest.h"
@@ -35,8 +36,7 @@ main()
         }
     },
     {"Variadic templates", '8', variadicTest},
-    {"Lambda/Fold expression", '9', nullptr},
-    {"Concepts test", 'c', nullptr}
+    {"Functor/Lambda/Fold expression", '9', lambdaTest},
   };
 
   for (bool found;;)

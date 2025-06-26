@@ -88,6 +88,7 @@
     <ClInclude Include="..\..\tests\DflOpTest.h" />
     <ClInclude Include="..\..\tests\FuncTest.h" />
     <ClInclude Include="..\..\tests\InitTest.h" />
+    <ClInclude Include="..\..\tests\LambdaTest.h" />
     <ClInclude Include="..\..\tests\ListTest.h" />
     <ClInclude Include="..\..\tests\math\Matrix.h" />
     <ClInclude Include="..\..\tests\math\Vector.h" />

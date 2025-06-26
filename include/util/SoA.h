@@ -2,10 +2,18 @@
 #define __SoA_h
 
 #include <cassert>
+#include <concepts>
 #include <tuple>
 
 namespace tcii::cg
 { // begin namespace tcii::cg
+
+template <typename A, typename T>
+concept IsAllocator = requires (size_t n, T* ptr)
+{
+  { A::template allocate<T>(n) } -> std::same_as<T*>;
+  { A::template free(ptr) };
+};
 
 template <typename index_t, typename... Args> class SoABase;
 
@@ -49,7 +57,7 @@ class Arrays
 {
 public:
   template <typename Allocator>
-  void allocate(index_t n)
+  void allocate(size_t n)
   {
     // do nothing
   }
@@ -98,13 +106,15 @@ public:
   }
 
   template <typename Allocator>
-  void allocate(index_t count)
+    requires IsAllocator<Allocator, T>
+  void allocate(size_t count)
   {
     Base::template allocate<Allocator>(count);
     data = Allocator::template allocate<T>(count);
   }
 
   template <typename Allocator>
+    requires IsAllocator<Allocator, T>
   void free()
   {
     Allocator::template free<T>(data);
@@ -387,7 +397,7 @@ public:
   SoA(index_t size)
   {
     if ((this->_size = size) != 0)
-      this->_arrays.template allocate<Allocator>(size);
+      this->_arrays.template allocate<Allocator>((size_t)size);
   }
 
   SoA(const type&) = delete;
@@ -418,7 +428,7 @@ public:
       return false;
     this->~SoA();
     if ((this->_size = size) != 0)
-      this->_arrays.template allocate<Allocator>(size);
+      this->_arrays.template allocate<Allocator>((size_t)size);
     return true;
   }
 
