@@ -1,6 +1,13 @@
 #ifndef __SoA_h
 #define __SoA_h
 
+// OVERVIEW: SoA.h
+// ========
+// Class definition for structure of arrays.
+//
+// Author: Paulo Pagliosa
+// Last revision: 28/06/2025
+
 #include <cassert>
 #include <concepts>
 #include <tuple>

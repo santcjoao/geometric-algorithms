@@ -1,6 +1,13 @@
 #ifndef __SharedObject_h
 #define __SharedObject_h
 
+// OVERVIEW: SharedObject.h
+// ========
+// Class definition for shared object.
+//
+// Author: Paulo Pagliosa
+// Last revision: 28/06/2025
+
 #include <type_traits>
 
 namespace tcii::cg
@@ -20,6 +27,11 @@ isSharedObject()
 
 #define ASSERT_SHARED(T, msg) static_assert(isSharedObject<T>(), msg)
 
+
+/////////////////////////////////////////////////////////////////////
+//
+// SharedObject: class for shared object
+// ============
 class SharedObject
 {
 public:
@@ -58,6 +70,11 @@ destroy(SharedObject* ptr)
   delete ptr;
 }
 
+
+/////////////////////////////////////////////////////////////////////
+//
+// ObjectPtr: class for shared object pointer
+// =========
 template <typename T>
 class ObjectPtr
 {

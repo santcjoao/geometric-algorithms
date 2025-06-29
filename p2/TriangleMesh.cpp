@@ -1,6 +1,13 @@
 #include "TriangleMesh.h"
 #include <cstring>
 
+// OVERVIEW: TriangleMesh.cpp
+// ========
+// Source file for triangle mesh.
+//
+// Author: Paulo Pagliosa
+// Last revision: 28/06/2025
+
 namespace tcii::cg
 { // begin namespace tcii::cg
 
