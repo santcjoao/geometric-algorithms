@@ -1,6 +1,13 @@
 #ifndef __SoA_h
 #define __SoA_h
 
+// OVERVIEW: SoA.h
+// ========
+// Class definition SoA.
+//
+// Author: Paulo Pagliosa
+// Last revision: 05/07/2025
+
 #include <cassert>
 #include <concepts>
 #include <tuple>
@@ -8,11 +15,13 @@
 namespace tcii::cg
 { // begin namespace tcii::cg
 
+#define ASSERT_IS_NOT_VOID(T, msg) static_assert(!std::is_void_v<T>, msg)
+
 template <typename A, typename T>
 concept IsAllocator = requires (size_t n, T* ptr)
 {
   { A::template allocate<T>(n) } -> std::same_as<T*>;
-  { A::template free(ptr) };
+  { A::template free<T>(ptr) };
 };
 
 template <typename index_t, typename... Args> class SoABase;
@@ -89,7 +98,7 @@ template <typename index_t, typename T, typename... Args>
 class Arrays<index_t, T, Args...>: private Arrays<index_t, Args...>
 {
 public:
-  static_assert(!std::is_void_v<T>, "SoA: array type cannot be void");
+  ASSERT_IS_NOT_VOID(T, "SoA: array type cannot be void");
 
   using Base = Arrays<index_t, Args...>;
 

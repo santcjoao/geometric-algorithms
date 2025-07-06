@@ -1,6 +1,13 @@
 #ifndef __SharedObject_h
 #define __SharedObject_h
 
+// OVERVIEW: SharedObject.h
+// ========
+// Class definition for shared object.
+//
+// Author: Paulo Pagliosa
+// Last revision: 05/07/2025
+
 #include <type_traits>
 
 namespace tcii::cg
@@ -18,7 +25,7 @@ isSharedObject()
   return std::is_assignable_v<SharedObject, T>;
 }
 
-#define ASSERT_SHARED(T, msg) static_assert(isSharedObject<T>(), msg)
+#define ASSERT_IS_SHARED(T, msg) static_assert(isSharedObject<T>(), msg)
 
 class SharedObject
 {
@@ -33,7 +40,7 @@ public:
   template <typename T>
   static auto makeUse(const T* object)
   {
-    ASSERT_SHARED(T, "Pointer to shared object expected");
+    ASSERT_IS_SHARED(T, "Pointer to shared object expected");
     if (object != nullptr)
       ++object->_useCount;
     return (T*)object;
@@ -42,7 +49,7 @@ public:
   template <typename T>
   static void release(T* object)
   {
-    ASSERT_SHARED(T, "Pointer to shared object expected");
+    ASSERT_IS_SHARED(T, "Pointer to shared object expected");
     if (object != nullptr && --object->_useCount <= 0)
       destroy(object);
   }

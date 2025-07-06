@@ -1,6 +1,13 @@
 #ifndef __TriangleMesh_h
 #define __TriangleMesh_h
 
+// OVERVIEW: TriangleMesh.h
+// ========
+// Class definition for triangle mesh.
+//
+// Author: Paulo Pagliosa
+// Last revision: 05/07/2025
+
 #include "graphics/Bounds3.h"
 #include "util/SharedObject.h"
 #include "ArrayView.h"
