@@ -1,3 +1,10 @@
+// OVERVIEW: TriangleMesh.cpp
+// ========
+// Source file for triangle mesh.
+//
+// Author: Paulo Pagliosa
+// Last revision: 06/07/2025
+
 #include "TriangleMesh.h"
 #include <cstring>
 

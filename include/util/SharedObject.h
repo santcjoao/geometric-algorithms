@@ -6,7 +6,7 @@
 // Class definition for shared object.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/07/2025
+// Last revision: 06/07/2025
 
 #include <type_traits>
 
@@ -27,6 +27,11 @@ isSharedObject()
 
 #define ASSERT_IS_SHARED(T, msg) static_assert(isSharedObject<T>(), msg)
 
+
+/////////////////////////////////////////////////////////////////////
+//
+// SharedObject: class for shared object
+// ============
 class SharedObject
 {
 public:
@@ -65,6 +70,11 @@ destroy(SharedObject* ptr)
   delete ptr;
 }
 
+
+/////////////////////////////////////////////////////////////////////
+//
+// ObjectPtr: class for shared object pointer
+// =========
 template <typename T>
 class ObjectPtr
 {

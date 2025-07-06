@@ -3,10 +3,10 @@
 
 // OVERVIEW: SoA.h
 // ========
-// Class definition SoA.
+// Class definition for structure of arrays (SoA).
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/07/2025
+// Last revision: 06/07/2025
 
 #include <cassert>
 #include <concepts>

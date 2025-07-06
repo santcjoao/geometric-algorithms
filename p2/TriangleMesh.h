@@ -6,7 +6,7 @@
 // Class definition for triangle mesh.
 //
 // Author: Paulo Pagliosa
-// Last revision: 05/07/2025
+// Last revision: 06/07/2025
 
 #include "graphics/Bounds3.h"
 #include "util/SharedObject.h"
@@ -45,6 +45,11 @@ struct Index3
 
 }; // Index3
 
+
+/////////////////////////////////////////////////////////////////////
+//
+// TriangleMesh: class for triangle mesh.
+// ============
 class TriangleMesh: public SharedObject
 {
 public:
