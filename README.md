@@ -16,5 +16,5 @@ To get the latest copy of the source code, use the commands:
 
 ```sh
 $>cd tcii-2026
-$/tcii-2025>git pull
+$/tcii-2026>git pull
 ```
