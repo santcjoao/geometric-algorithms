@@ -3,6 +3,7 @@
 
 #include <cstdarg>
 #include <stdexcept>
+#include <string>
 
 namespace tcii::cg
 { // begin namespace tcii::cg

@@ -1,7 +1,7 @@
 #include "DflOpTest.h"
 #include "FuncTest.h"
 #include "InitTest.h"
-#include "lambdaTest.h"
+#include "LambdaTest.h"
 #include "ListTest.h"
 #include "MatrixTest.h"
 #include "RefTest.h"

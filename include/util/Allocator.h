@@ -75,7 +75,7 @@ private:
 inline void
 printUsedMemory()
 {
-  printf("Used Memory: %llu bytes\n", Allocator::usedMemory());
+  printf("Used Memory: %zu bytes\n", Allocator::usedMemory());
 }
 
 inline void
@@ -86,7 +86,7 @@ printMemoryMap()
     puts("       Ptr       | Size (B) | Type Name");
     Allocator::debug([](auto ptr, const auto& typeInfo)
       {
-        printf("%p | %08llu | %s\n", ptr, typeInfo.size, typeInfo.name);
+        printf("%p | %08zu | %s\n", ptr, typeInfo.size, typeInfo.name);
       });
   }
 }

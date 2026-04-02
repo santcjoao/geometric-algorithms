@@ -103,7 +103,7 @@ private:
 
   static body_type* null();
 
-  friend Vector;
+  friend Vector<T>;
 
 };  // VectorBody
 
