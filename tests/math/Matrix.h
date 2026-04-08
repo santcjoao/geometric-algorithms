@@ -131,7 +131,7 @@ Matrix<T>::Matrix(const Matrix& other):
 #ifdef DEBUG
   puts("**Matrix copy ctor**");
 #endif // DEBUG
-  for (auto s = _m * _n, i = 0; i < s; ++i)
+  for (size_t s = _m * _n, i{}; i < s; ++i)
     _data[i] = other._data[i];
 }
 
