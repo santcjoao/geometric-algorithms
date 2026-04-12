@@ -30,7 +30,7 @@ _makeVTable_Circle2()
 {
   Circle2::VTable vTable = *_vTable_Shape2();
 
-  vTable.typeName = "Circle";
+  vTable.typeName = "Circle2";
   vTable.draw = (Shape2::DrawFunc)draw_Circle2;
   vTable.bounds = (Shape2::BoundsFunc)bounds_Circle2;
   vTable.move = (Shape2::MoveFunc)move_Circle2;

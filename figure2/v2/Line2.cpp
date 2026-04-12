@@ -31,7 +31,7 @@ _makeVTable_Line2()
 {
   Line2::VTable vTable = *_vTable_Shape2();
 
-  vTable.typeName = "Line";
+  vTable.typeName = "Line2";
   vTable.draw = (Shape2::DrawFunc)draw_Line2;
   vTable.bounds = (Shape2::BoundsFunc)bounds_Line2;
   vTable.move = (Shape2::MoveFunc)move_Line2;

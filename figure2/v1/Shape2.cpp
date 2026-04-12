@@ -1,5 +1,5 @@
-#include "Line2.h"
 #include "Circle2.h"
+#include "Line2.h"
 #include "Rectangle2.h"
 
 inline void
@@ -7,9 +7,9 @@ beginRender(const Shape2* s)
 {
   static const char* typeName[]
   {
-    "Line",
-    "Circle",
-    "Rectangle"
+    "Line2",
+    "Circle2",
+    "Rectangle2"
   };
 
   printf("**%s %d%s\n",
@@ -36,11 +36,11 @@ render(const Shape2* s)
     case Shape2::LINE:
       draw((const Line2*)s);
       break;
-    case Shape2::CIRCLE:
-      draw((const Circle2*)s);
-      break;
     case Shape2::RECTANGLE:
       draw((const Rectangle2*)s);
+      break;
+    case Shape2::CIRCLE:
+      draw((const Circle2*)s);
       break;
   }
   endRender(s);
@@ -56,11 +56,11 @@ bounds(const Shape2* s)
     case Shape2::LINE:
       b = bounds((const Line2*)s);
       break;
-    case Shape2::CIRCLE:
-      b = bounds((const Circle2*)s);
-      break;
     case Shape2::RECTANGLE:
       b = bounds((const Rectangle2*)s);
+      break;
+    case Shape2::CIRCLE:
+      b = bounds((const Circle2*)s);
       break;
   }
   return b;
@@ -74,11 +74,11 @@ move(Shape2* s, const Point2& delta)
     case Shape2::LINE:
       move((Line2*)s, delta);
       break;
-    case Shape2::CIRCLE:
-      move((Circle2*)s, delta);
-      break;
     case Shape2::RECTANGLE:
       move((Rectangle2*)s, delta);
+      break;
+    case Shape2::CIRCLE:
+      move((Circle2*)s, delta);
       break;
   }
 }

@@ -1,8 +1,8 @@
 #ifndef __Figure2_h
 #define __Figure2_h
 
-#include "Line2.h"
 #include "Circle2.h"
+#include "Line2.h"
 #include "Rectangle2.h"
 #include "Shape2List.h"
 
@@ -46,18 +46,6 @@ addLine(Figure2* f, const Point2& p1, const Point2& p2)
 }
 
 inline Shape2*
-add(Figure2* f, Circle2* circle)
-{
-  return add(f, (Shape2*)circle);
-}
-
-inline Shape2*
-addCircle(Figure2* f, const Point2& center, int radius)
-{
-  return add(f, createCircle2(center, radius));
-}
-
-inline Shape2*
 add(Figure2* f, Rectangle2* rect)
 {
   return add(f, (Shape2*)rect);
@@ -67,6 +55,18 @@ inline Shape2*
 addRectangle(Figure2* f, const Point2& p1, const Point2& p2)
 {
   return add(f, createRectangle2(p1, p2));
+}
+
+inline Shape2*
+add(Figure2* f, Circle2* circle)
+{
+  return add(f, (Shape2*)circle);
+}
+
+inline Shape2*
+addCircle(Figure2* f, const Point2& center, int radius)
+{
+  return add(f, createCircle2(center, radius));
 }
 
 void render(const Figure2*);

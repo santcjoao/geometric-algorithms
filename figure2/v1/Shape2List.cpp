@@ -5,7 +5,7 @@ add(Shape2List* list, Shape2* shape)
 {
   shape->nextSelected = shape->next = nullptr;
   shape->selected = false;
-  if (list->head == nullptr)
+  if (!list->head)
     list->head = shape;
   else
   {
@@ -33,9 +33,9 @@ remove(Shape2List* list, Shape2* shape)
 void
 clear(Shape2List* list)
 {
-  while (list->head != nullptr)
+  while (list->head)
   {
-    auto temp = list->head;
+    Shape2* temp = list->head;
 
     list->head = temp->next;
     delete temp;

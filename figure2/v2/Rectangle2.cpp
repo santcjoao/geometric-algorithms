@@ -31,7 +31,7 @@ _makeVTable_Rectangle2()
 {
   Rectangle2::VTable vTable = *_vTable_Shape2();
 
-  vTable.typeName = "Rectangle";
+  vTable.typeName = "Rectangle2";
   vTable.draw = (Shape2::DrawFunc)draw_Rectangle2;
   vTable.bounds = (Shape2::BoundsFunc)bounds_Rectangle2;
   vTable.move = (Shape2::MoveFunc)move_Rectangle2;

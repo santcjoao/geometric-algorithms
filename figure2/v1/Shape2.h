@@ -11,8 +11,8 @@ struct Shape2
   enum Type
   {
     LINE,
-    CIRCLE,
-    RECTANGLE
+    RECTANGLE,
+    CIRCLE
   };
 
   Type type;
