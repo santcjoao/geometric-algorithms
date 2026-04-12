@@ -21,8 +21,8 @@ Figure2::render() const
 {
   puts("**Begin figure");
   bounds().print("bounds");
-  for (auto s = _shapes._head; s; s = s->_next)
-    s->render();
+  for (const auto& s : _shapes)
+    s.render();
   puts("**End figure\n");
 }
 
@@ -31,8 +31,8 @@ Figure2::bounds() const
 {
   Bounds2 b;
 
-  for (auto s = _shapes._head; s; s = s->_next)
-    b.inflate(s->bounds());
+  for (const auto& s : _shapes)
+    b.inflate(s.bounds());
   return b;
 }
 
@@ -66,16 +66,16 @@ Figure2::clearSelection()
 Shape2*
 Figure2::select(int id)
 {
-  for (auto s = _shapes._head; s; s = s->_next)
-    if (s->_id == id)
+  for (auto& s : _shapes)
+    if (s._id == id)
     {
-      if (!s->_selected)
+      if (!s._selected)
       {
-        s->_selected = true;
-        s->_nextSelected = _lastSelected;
-        _lastSelected = s;
+        s._selected = true;
+        s._nextSelected = _lastSelected;
+        _lastSelected = &s;
       }
-      return s;
+      return &s;
     }
   return nullptr;
 }
@@ -84,11 +84,11 @@ void
 Figure2::selectAll()
 {
   _lastSelected = nullptr;
-  for (auto s = _shapes._head; s; s = s->_next)
+  for (auto& s : _shapes)
     {
-      s->_selected = true;
-      s->_nextSelected = _lastSelected;
-      _lastSelected = s;
+      s._selected = true;
+      s._nextSelected = _lastSelected;
+      _lastSelected = &s;
     }   
 }
 

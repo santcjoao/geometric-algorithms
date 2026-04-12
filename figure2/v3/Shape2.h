@@ -6,6 +6,7 @@
 
 class Figure2;
 class Shape2List;
+class Shape2ListIterator;
 
 class Shape2
 {
@@ -45,6 +46,7 @@ private:
 
   friend Figure2;
   friend Shape2List;
+  friend Shape2ListIterator;
 
 }; // Shape2
 
