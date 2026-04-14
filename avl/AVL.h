@@ -1,6 +1,7 @@
 #ifndef __AVL_h
 #define __AVL_h
 
+#include <functional>
 #include <initializer_list>
 #include <cstdint>
 #include <utility>
@@ -81,20 +82,10 @@ protected:
 
 }; // TreeIteratorBase
 
-template <typename T> class Tree;
-template <typename T> class TreeIterator;
-
 template <typename T>
 class TreeNode: public TreeNodeBase
 {
 public:
-  ~TreeNode()
-  {
-    delete (TreeNode*)_childL;
-    delete (TreeNode*)_childR;
-  }
-
-private:
   T _value;
 
   TreeNode(const T& value, TreeNodeBase* parent):
@@ -104,8 +95,11 @@ private:
     // do nothing
   }
 
-  friend Tree<T>;
-  friend TreeIterator<T>;
+  ~TreeNode()
+  {
+    delete (TreeNode*)_childL;
+    delete (TreeNode*)_childR;
+  }
 
 }; // TreeNode
 
@@ -113,6 +107,12 @@ template <typename T>
 class TreeIterator: public TreeIteratorBase
 {
 public:
+  TreeIterator(TreeNode<T>* node):
+    TreeIteratorBase{node}
+  {
+    // do nothing
+  }
+
   auto& operator *() const
   { 
     return ((TreeNode<T>*)_node)->_value;
@@ -139,30 +139,19 @@ public:
     
   // INSERT YOUR CODE HERE
 
-private:
-  TreeIterator(TreeNode<T>* node):
-    TreeIteratorBase{node}
-  {
-    // do nothing
-  }
-
-  friend Tree<T>;
-
 }; // TreeIterator
 
-template <typename T>
+template <typename T, typename C = std::less<T>>
 class Tree
 {
 public:
   using iterator = TreeIterator<T>;
   using IterFunc = void(const T&);
 
-  Tree() = default;
-
-  Tree(std::initializer_list<T> list)
+  Tree(C comp = C{}):
+    _comp{comp}
   {
-    for (const auto& value : list)
-      insert(value);
+    // do nothing
   }
 
   ~Tree()
@@ -229,18 +218,19 @@ private:
 
   Node* _root{};
   unsigned _nodeCount{};
+  C _comp;
 
-  static Node* insert(Node*, TreeNodeBase*, const T&, Node*&);
+  static Node* insert(Node*, TreeNodeBase*, const T&, Node*&, C&);
   static void iterate(Node*, IterFunc);
 
 }; // Tree
 
-template <typename T>
+template <typename T, typename C>
 auto
-Tree<T>::insert(const T& value) -> std::pair<iterator, bool>
+Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
 {
   Node* valueNode;
-  auto root = insert(_root, nullptr, value, valueNode);
+  auto root = insert(_root, nullptr, value, valueNode, _comp);
   auto success = bool(root);
 
   if (success)
@@ -251,9 +241,9 @@ Tree<T>::insert(const T& value) -> std::pair<iterator, bool>
   return {valueNode, success};
 }
 
-template <typename T>
+template <typename T, typename C>
 auto
-Tree<T>::begin() const -> iterator
+Tree<T, C>::begin() const -> iterator
 {
   TreeNodeBase* node{_root};
 
@@ -263,33 +253,34 @@ Tree<T>::begin() const -> iterator
   return iterator{(Node*)node};
 }
 
-template <typename T>
+template <typename T, typename C>
 auto
-Tree<T>::find(const T& value) const -> iterator
+Tree<T, C>::find(const T& value) const -> iterator
 {
   // INSERT YOUR CODE HERE
   return end();
 }
 
-template <typename T>
-auto
-Tree<T>::insert(Node* node,
+template <typename T, typename C>
+TreeNode<T>*
+Tree<T, C>::insert(Node* node,
   TreeNodeBase* parent,
   const T& value,
-  Node*& valueNode) -> Node*
+  Node*& valueNode,
+  C& comp)
 {
   if (!node)
     return valueNode = new Node{value, parent};
-  if (value < node->_value)
+  if (comp(value, node->_value))
   {
-    if (auto l = insert((Node*)node->_childL, node, value, valueNode))
+    if (auto l = insert((Node*)node->_childL, node, value, valueNode, comp))
       node->_childL = l;
     else
       return nullptr;
   }
-  else if (node->_value < value)
+  else if (comp(node->_value, value))
   {
-    if (auto r = insert((Node*)node->_childR, node, value, valueNode))
+    if (auto r = insert((Node*)node->_childR, node, value, valueNode, comp))
       node->_childR = r;
     else
       return nullptr;
@@ -303,9 +294,9 @@ Tree<T>::insert(Node* node,
   return (Node*)temp;
 }
 
-template <typename T>
+template <typename T, typename C>
 void
-Tree<T>::iterate(Node* node, IterFunc func)
+Tree<T, C>::iterate(Node* node, IterFunc func)
 {
   if (node)
   {
