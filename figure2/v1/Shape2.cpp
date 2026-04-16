@@ -8,8 +8,8 @@ beginRender(const Shape2* s)
   static const char* typeName[]
   {
     "Line2",
-    "Circle2",
-    "Rectangle2"
+    "Rectangle2",
+    "Circle2"
   };
 
   printf("**%s %d%s\n",

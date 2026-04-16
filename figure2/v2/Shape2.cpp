@@ -31,7 +31,7 @@ _makeVTable_Shape2()
 {
   return Shape2::VTable
   {
-    .typeName = "Shape",
+    .typeName = "Shape2",
     .render = render_Shape2,
     .beginRender = beginRender_Shape2,
     .endRender = endRender_Shape2
