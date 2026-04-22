@@ -208,7 +208,7 @@ public:
 
   auto contains(const T& value) const
   {
-    return find(value) == end();
+    return find(value) != end();
   }
   
   // INSERT YOUR CODE HERE
