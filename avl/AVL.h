@@ -22,6 +22,11 @@ struct TreeNodeBase
     // do nothing
   }
 
+  TreeNodeBase(int height):
+    _height{height}
+  {
+    // do nothing
+  }
 protected:
   ~TreeNodeBase() = default;
 
@@ -107,6 +112,12 @@ template <typename T>
 class TreeIterator: public TreeIteratorBase
 {
 public:
+  using iterator_category = std::bidirectional_iterator_tag;
+  using value_type = T;
+  using pointer = T*;
+  using reference = T&;
+  using difference_type = std::ptrdiff_t;
+
   TreeIterator(TreeNode<T>* node):
     TreeIteratorBase{node}
   {
@@ -137,8 +148,19 @@ public:
     return temp;
   }
     
-  // INSERT YOUR CODE HERE
+  auto operator --()
+  {
+    decrement();
+    return *this;
+  }
 
+  auto operator --(int)
+  {
+    auto temp = *this;
+
+    decrement();
+    return temp;
+  }
 }; // TreeIterator
 
 template <typename T, typename C = std::less<T>>
@@ -146,6 +168,7 @@ class Tree
 {
 public:
   using iterator = TreeIterator<T>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
   using IterFunc = void(const T&);
 
   Tree(C comp = C{}):
@@ -161,10 +184,10 @@ public:
 
   void clear()
   {
-    if (_root)
+    if (_header._parent)
     {
-      delete _root;
-      _root = nullptr;
+      delete _header._parent;
+      _header._parent = nullptr;
       _nodeCount = 0;
     }
   }
@@ -184,24 +207,27 @@ public:
 
   auto empty() const
   {
-    return !_root;
+    return !_header._parent;
   }
 
   void iterate(IterFunc func) const
   {
-    iterate(_root, func);
+    iterate(_header._parent, func);
   }
 
   auto height() const
   {
-    return AVLHelper::height(_root);
+    return AVLHelper::height(_header._parent);
   }
 
-  iterator begin() const;
+  iterator begin() const
+  {
+    return (Node*)_header._childL;
+  }
 
   auto end() const
   {
-    return iterator{nullptr};
+    return (Node*)&_header;
   }
 
   iterator find(const T&) const;
@@ -211,12 +237,21 @@ public:
     return find(value) != end();
   }
   
-  // INSERT YOUR CODE HERE
+  auto rbegin() const
+  {
+    // TODO: Check
+    return reverse_iterator(begin());
+  }
+  auto rend() const
+  {
+    // TODO: Check
+    return reverse_iterator(end());
+  }
 
 private:
   using Node = TreeNode<T>;
 
-  Node* _root{};
+  TreeNodeBase _header{-1};
   unsigned _nodeCount{};
   C _comp;
 
@@ -230,27 +265,15 @@ auto
 Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
 {
   Node* valueNode;
-  auto root = insert(_root, nullptr, value, valueNode, _comp);
+  auto root = insert(_header._parent, nullptr, value, valueNode, _comp);
   auto success = bool(root);
 
   if (success)
   {
-    _root = root;
+    _header._parent = root;
     _nodeCount++;
   }
   return {valueNode, success};
-}
-
-template <typename T, typename C>
-auto
-Tree<T, C>::begin() const -> iterator
-{
-  TreeNodeBase* node{_root};
-
-  if (node)
-    while (node->_childL)
-      node = node->_childL;
-  return iterator{(Node*)node};
 }
 
 template <typename T, typename C>
