@@ -9,6 +9,10 @@
 namespace tcii::avl
 { // begin namespace tcii::avl
 
+  // forward declaration da Tree
+template <typename T, typename C = std::less<T>>
+class Tree;
+
 struct TreeNodeBase
 {
   TreeNodeBase* _parent;
@@ -161,6 +165,8 @@ public:
     decrement();
     return temp;
   }
+
+  friend class Tree<T, C>;
 }; // TreeIterator
 
 template <typename T, typename C = std::less<T>>
@@ -199,6 +205,8 @@ public:
     for (const auto& value : list)
       insert(value);
   }
+
+  bool erase(const T& value);
 
   auto size() const
   {
@@ -280,7 +288,17 @@ template <typename T, typename C>
 auto
 Tree<T, C>::find(const T& value) const -> iterator
 {
-  // INSERT YOUR CODE HERE
+  auto node = _header._parent;
+
+  while (node)
+  {
+    if (_comp(value, node->_value))
+      node = (Node*)node->_childL;
+    else if (_comp(node->_value, value))
+      node = (Node*)node->_childR;
+    else
+      return iterator{(Node*)node};
+  }
   return end();
 }
 
@@ -315,6 +333,55 @@ Tree<T, C>::insert(Node* node,
 
   AVLHelper::balance(temp);
   return (Node*)temp;
+}
+
+template <typename T, typename C>
+bool
+Tree<T, C>::erase(const T& value)
+{
+  auto iterator = find(value);
+
+  if(iterator == end())
+    return false;
+
+  auto node = (Node*)iterator._node;
+  auto parent = node->_parent;
+  auto childL = node->_childL;
+  auto childR = node->_childR;
+
+  if (childL && childR)
+  {
+    auto successor = childR;
+
+    while (successor->_childL)
+      successor = (Node*)successor->_childL;
+
+    std::swap(node->_value, successor->_value);
+    parent = successor->_parent;
+    childL = successor->_childL;
+    childR = successor->_childR;
+    node = successor;
+  }
+
+  auto& ref = parent ? (parent->_childL == node ? parent->_childL : parent->_childR) : _header._parent;
+  ref = childL ? childL : childR;
+  if (ref) ref->_parent = parent;
+
+  delete (Node*)node;
+
+  auto current = parent;
+  while(current)
+  {
+    auto next = current->_parent;
+    
+    auto& link = next ? (next->_childL == current ? next->_childL : next->_childR) : _header._parent;
+    AVLHelper::balance(link);
+    
+    current = next;
+  }
+
+  _nodeCount--;
+  return true;
 }
 
 template <typename T, typename C>
