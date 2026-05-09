@@ -198,15 +198,15 @@ public:
     }
   }
 
-  std::pair<iterator, bool> insert(const T&);
+  std::pair<iterator, bool> insert(const T&); // TODO: Atualizar left e right do header
 
-  void insert(std::initializer_list<T> list)
+  void insert(std::initializer_list<T> list) // TODO: Atualizar left e right do header
   {
     for (const auto& value : list)
       insert(value);
   }
 
-  bool erase(const T& value);
+  bool erase(const T& value); // TODO: Atualizar left e right do header
 
   auto size() const
   {
