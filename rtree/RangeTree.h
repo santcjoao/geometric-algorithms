@@ -68,6 +68,17 @@ public:
   {
     assert(!_root);
     // insert your code here
+    // sort the index array (canonic set of node) by their d-th coordinate
+    std::sort(_indices.begin(), _indices.end(), [&points](int i, int j){
+       return points[i][D] < points[j][D] });
+
+    // get the median value to be the root
+    _root = new Node(points[_indices[_indices.size()/2]][D]);
+    construir left
+    construi right
+    qwiduhqhuidqwhiihqdhiqwdhiuhuiqwdhuiwqdhuihuiwqd hahahahaha
+    CalculateCanonicSet(_root);
+
   }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
@@ -82,15 +93,35 @@ private:
 
   struct Node
   {
-    real value; // Pivô. Valor da d-ésima coordenada do ponto.
+    real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto.
 
-    // Intervalo [first, last) de pontos associados a este nó.
-    Index_t first;
-    Index_t last;
+    // Intervalo [first, last) de pontos associados a este conjunto nodal
+    index_t first;
+    index_t last;
+    IndexArray canonicSet;
+    real minValue;
+    real maxValue;
 
     AssociatedTree* associatedTree{};
     Node* left{};
     Node* right{};
+
+  public:
+    Node() = default;
+    
+    Node(real value):
+      _splitValue{value}
+    {
+      // Do nothing
+    }
+
+    IndexArray calculateCanonicSet(Node* node)
+    {
+      if (node->left == nullptr && node->right == nullptr)
+        canonicSet 
+      else 
+        canonicSet = calculateCanonicSet(node->left) U  U calculateCanonicSet(node->right);
+    }
   }; // Node
 
   Node* _root{};
