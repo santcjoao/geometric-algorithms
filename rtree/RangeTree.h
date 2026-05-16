@@ -68,17 +68,23 @@ public:
   {
     assert(!_root);
     // insert your code here
+    // initializing indices array
+    _indices{points};
+
     // sort the index array (canonic set of node) by their d-th coordinate
     std::sort(_indices.begin(), _indices.end(), [&points](int i, int j){
        return points[i][D] < points[j][D] });
 
     // get the median value to be the root
-    _root = new Node(points[_indices[_indices.size()/2]][D]);
-    construir left
-    construi right
-    qwiduhqhuidqwhiihqdhiqwdhiuhuiqwdhuiwqdhuihuiwqd hahahahaha
-    CalculateCanonicSet(_root);
+    size_t median = _indices.size()/2;
+    _root = new Node(points[_indices[median]][D], 0, _indices.size());
 
+    // build the left and right subtrees
+    build(_root->left, 0, median, _indices, points);
+    build(_root->right, median + 1, _indices.size(), _indices, points);
+    
+    // build the associated tree related to this node
+    _root->associatedTree->build(points);
   }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
@@ -96,17 +102,13 @@ private:
     real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto.
 
     // Intervalo [first, last) de pontos associados a este conjunto nodal
-    index_t first;
-    index_t last;
-    IndexArray canonicSet;
-    real minValue;
-    real maxValue;
+    index_t _first;
+    index_t _last;
 
     AssociatedTree* associatedTree{};
     Node* left{};
     Node* right{};
 
-  public:
     Node() = default;
     
     Node(real value):
@@ -115,19 +117,43 @@ private:
       // Do nothing
     }
 
-    IndexArray calculateCanonicSet(Node* node)
+    Node(real value, index_t first, index_t last):
+      _splitValue{value}, 
+      _first{first}, 
+      _last{last}
     {
-      if (node->left == nullptr && node->right == nullptr)
-        canonicSet 
-      else 
-        canonicSet = calculateCanonicSet(node->left) U  U calculateCanonicSet(node->right);
+      // Do nothing
     }
   }; // Node
+
+  void build (Node*& child, size_t first, size_t last, const IndexArray& indices, const A& points);
 
   Node* _root{};
   IndexArray _indices;
 
 }; // BBST
+
+template<size_t D, typename P, typename A>
+void BBST<D, P, A> :: build(Node*& child, size_t first, size_t last, const IndexArray& indices, const A& points)
+{
+  if (first == last)
+    return;
+  else if (last != first + 1)
+  {
+    // create a new node
+    size_t median = last / 2;
+    child = new Node(points[indices[median]][D], first, last);
+
+    // recursive step
+    build(child->left, first, median, indices, points);
+    build(child->right, median + 1, last, indices, points);
+  }
+  else
+  {
+    child =  new Node(points[indices[first]][D], first, last);
+  }
+  child->associatedTree->build(points);
+}
 
 } // end namespace rtree
 
