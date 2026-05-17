@@ -43,12 +43,18 @@ public:
   {
     // insert your code here
   }
- 
+
+  void build(index_t first, index_t last, const IndexArray& indices, const A& points)
+  {}
+
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
   {
     // insert your code here
     return 0;
   }
+
+private:
+  
 
 }; // BBST
 
@@ -67,24 +73,36 @@ public:
   void build(const A& points)
   {
     assert(!_root);
-    // insert your code here
+
     // initializing indices array
     _indices{points};
 
     // sort the index array (canonic set of node) by their d-th coordinate
-    std::sort(_indices.begin(), _indices.end(), [&points](int i, int j){
+    std::sort(_indices.begin(), _indices.end(), [&points](index_t i, size_t j){
        return points[i][D] < points[j][D] });
 
-    // get the median value to be the root
-    size_t median = _indices.size()/2;
-    _root = new Node(points[_indices[median]][D], 0, _indices.size());
+    index_t first = 0;
+    index_t last = (index_t)_indices.size();
+    build(_root, first, last, _indices, points);
+  }
 
-    // build the left and right subtrees
-    build(_root->left, 0, median, _indices, points);
-    build(_root->right, median + 1, _indices.size(), _indices, points);
+ void build(index_t first, index_t last, const IndexArray& indices, const A& points)
+ {
+    assert(!_root);
+
+    // initializing index array
+    _indices{last - first};
+
+    for (size_t i = 0, j = first; i < last - first && j < last; i++, j++)
+      _indices[i] = indices[j];
+
+    // sorting by d-th coordinate and building
+    std::sort(_indices.begin(), _indices.end(), [&points](index_t i, size_t j){
+      return points[i][D] < points[j][D]});
     
-    // build the associated tree related to this node
-    _root->associatedTree->build(points);
+    index_t first = 0;
+    index_t last = (index_t)_indices.size();
+    build(_root, first, last, _indices, points);
   }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
@@ -126,33 +144,42 @@ private:
     }
   }; // Node
 
-  void build (Node*& child, size_t first, size_t last, const IndexArray& indices, const A& points);
-
+  void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
+ 
   Node* _root{};
   IndexArray _indices;
 
 }; // BBST
 
 template<size_t D, typename P, typename A>
-void BBST<D, P, A> :: build(Node*& child, size_t first, size_t last, const IndexArray& indices, const A& points)
+void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points)
 {
   if (first == last)
     return;
   else if (last != first + 1)
   {
     // create a new node
-    size_t median = last / 2;
-    child = new Node(points[indices[median]][D], first, last);
+    index_t median = last / 2;
+    node = new Node(points[indices[median]][D], first, last);
+
+    // searching new first and new last
+    index_t nf;
+    index_t nl;
+    for (nf = median + 1; points[_indices[nf]][D] != points[_indices[median]][D] && nf != last; nf++);
+    for (nl = median - 1; points[_indices[nl]][D] != points[_indices[median]][D] && nl != first; nl--);
 
     // recursive step
-    build(child->left, first, median, indices, points);
-    build(child->right, median + 1, last, indices, points);
+    build(node->left, first, nl, indices, points);
+    build(node->right, nf, last, indices, points);
   }
   else
-  {
-    child =  new Node(points[indices[first]][D], first, last);
-  }
-  child->associatedTree->build(points);
+    node =  new Node(points[indices[first]][D], first, last);
+
+  // building associated trees
+  if (node != _root)
+    node->associatedTree->build(node->_first, node->_last, indices, points);
+  else
+    node->associatedTree->build(points);
 }
 
 } // end namespace rtree
