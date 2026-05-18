@@ -200,7 +200,7 @@ public:
 
   std::pair<iterator, bool> insert(const T&); // TODO: Atualizar left e right do header
 
-  void insert(std::initializer_list<T> list) // TODO: Atualizar left e right do header
+  void insert(std::initializer_list<T> list) 
   {
     for (const auto& value : list)
       insert(value);
@@ -280,6 +280,23 @@ Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
   {
     _header._parent = root;
     _nodeCount++;
+    
+    // checking if there is a element which is less/ grater than header's children
+    auto tempL = _header._parent; 
+    auto tempR = _header._parent;
+    
+    while(tempL->_childL && tempR->_childR)
+    {
+      if (tempL->_childL)
+        tempL = tempL->_childL;
+      if (tempR->_childR)
+        tempR = tempR->_childR;
+    }
+
+    if(_header._childL != tempL)
+      _header._childL = tempL;
+    if(_header._childR != tempR)
+      _header._childR = tempR;
   }
   return {valueNode, success};
 }
@@ -379,8 +396,30 @@ Tree<T, C>::erase(const T& value)
     
     current = next;
   }
-
+  
   _nodeCount--;
+  
+  // checking if the removed element was any header's child
+  if(_header._childL == nullptr)
+  {
+    auto temp = _header._parent;
+    if (temp != nullptr)
+    {
+      while(temp->_childL != nullptr)
+        temp = temp->_childL;
+      _header._childL = temp;
+    }
+  }
+  if(_header._childR == nullptr)
+  {
+    auto temp = _header._parent;
+    if (temp != nullptr)
+    {
+      while(temp->_childR != nullptr)
+        temp = temp->_childR;
+      _header._childR = temp;
+    }
+  }
   return true;
 }
 
