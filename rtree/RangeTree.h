@@ -41,11 +41,27 @@ public:
 
   void build(const A& points)
   {
-    // insert your code here
+    assert(!_indices);
+    _indices{points};
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][D] < points[j][D];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
   }
 
   void build(index_t first, index_t last, const IndexArray& indices, const A& points)
-  {}
+  {
+    assert(!_indices);
+    _indices{last - first};
+
+    for(auto i = 0, j = first; i < last - first && j < last; i++, j++)
+      _indices[i] = indices[j];
+    
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][D] < points[j][D];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
+  }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
   {
@@ -88,13 +104,13 @@ public:
   void build(const A& points)
   {
     assert(!_root);
-
-    // initializing indices array
     _indices{points};
 
     // sort the index array (canonic set of node) by their d-th coordinate
-    std::sort(_indices.begin(), _indices.end(), [&points](index_t i, size_t j){
-       return points[i][D] < points[j][D] });
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][D] < points[j][D];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
 
     index_t first = 0;
     index_t last = (index_t)_indices.size();
@@ -104,16 +120,16 @@ public:
  void build(index_t first, index_t last, const IndexArray& indices, const A& points)
  {
     assert(!_root);
-
-    // initializing index array
     _indices{last - first};
 
-    for (size_t i = 0, j = first; i < last - first && j < last; i++, j++)
+    for (auto i = 0, j = first; i < last - first && j < last; i++, j++)
       _indices[i] = indices[j];
 
     // sorting by d-th coordinate and building
-    std::sort(_indices.begin(), _indices.end(), [&points](index_t i, size_t j){
-      return points[i][D] < points[j][D]});
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][D] < points[j][D];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
     
     index_t first = 0;
     index_t last = (index_t)_indices.size();
@@ -164,7 +180,7 @@ private:
   IndexArray _indices;
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
- 
+
   size_t queryRecursive(Node* node, const A& points, const Bounds& bounds, PointFunc f) const
   {
     if (!node) return 0;
@@ -219,14 +235,14 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
   else if (last != first + 1)
   {
     // create a new node
-    index_t median = last / 2;
+    auto median = last / 2;
     node = new Node(points[indices[median]][D], first, last);
 
     // searching new first and new last
-    index_t nf;
-    index_t nl;
-    for (nf = median + 1; points[_indices[nf]][D] != points[_indices[median]][D] && nf != last; nf++);
-    for (nl = median - 1; points[_indices[nl]][D] != points[_indices[median]][D] && nl != first; nl--);
+    auto nf = median + 1;
+    auto nl = median - 1;
+    for (; points[_indices[nf]][D] == points[_indices[median]][D] && nf < last; nf++);
+    for (; points[_indices[nl]][D] == points[_indices[median]][D] && nl > first; nl--);
 
     // recursive step
     build(node->left, first, nl, indices, points);
