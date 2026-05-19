@@ -140,7 +140,7 @@ public:
   {
     if(!_root) return 0;
 
-    return queryRecursive(_root, points, bounds, f);
+    return query(_root, points, bounds, f);
   }
 
 private:
@@ -181,49 +181,7 @@ private:
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
 
-  size_t queryRecursive(Node* node, const A& points, const Bounds& bounds, PointFunc f) const
-  {
-    if (!node) return 0;
-
-    auto min_bounds = bounds[0][D-1];
-    auto max_bounds = bounds[1][D-1];
-
-    auto node_min = _x<D, P>(points[_indices[node->first]]);
-    auto node_max = _x<D, P>(points[_indices[node->last-1]]);
-
-    // Nó completamente contido na AABB.
-    if(min_bounds <= node_min && max_bounds >= node_max)
-    {
-      if constexpr (D > 1)
-      {
-        if(node->associatedTree)
-          return node->associatedTree->query(points, bounds, f);
-      }
-      else
-      {
-        size_t found = 0;
-
-        for(size_t i = node->first; i < node->last; ++i)
-        {
-          if(!f(points, _indices[i])) break;
-            found++;
-        }
-
-        return found;
-      }
-    }
-
-    size_t np = 0;
-
-    // Nó não completamente contido na AABB. Verifica os filhos.
-    if (min_bounds <= node->pivot && node->left)
-      np += queryRecursive(node->left, points, bounds, f);
-    
-    if(max_bounds >= node->pivot && node->right)
-      np += queryRecursive(node->right, points, bounds, f);
-
-    return np;
-  }
+  size_t query(Node* node, const A& points, const Bounds& bounds, PointFunc f) const;
 
 }; // BBST
 
@@ -256,7 +214,53 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
     node->associatedTree->build(node->_first, node->_last, indices, points);
   else
     node->associatedTree->build(points);
-}
+} // BBST::build
+
+template<size_t D, typename P, typename A>
+size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, PointFunc f) const
+{
+  if (!node) return 0;
+
+  auto min_bounds = bounds[0][D-1];
+  auto max_bounds = bounds[1][D-1];
+
+  auto node_min = _x<D, P>(points[_indices[node->first]]);
+  auto node_max = _x<D, P>(points[_indices[node->last-1]]);
+
+  // Nó completamente contido na AABB.
+  if(min_bounds <= node_min && max_bounds >= node_max)
+  {
+    if constexpr (D > 1)
+    {
+      if(node->associatedTree)
+        return node->associatedTree->query(points, bounds, f);
+    }
+    else
+    {
+      size_t found = 0;
+
+      for(size_t i = node->first; i < node->last; ++i)
+      {
+        if(!f(points, _indices[i])) break;
+          found++;
+      }
+
+      return found;
+    }
+  }
+
+  size_t np = 0;
+
+  // Nó não completamente contido na AABB. Verifica os filhos.
+  if (min_bounds <= node->pivot && node->left)
+    np += query(node->left, points, bounds, f);
+  
+  if(max_bounds >= node->pivot && node->right)
+    np += query(node->right, points, bounds, f);
+
+  return np;
+} // BBST::query
+
 
 } // end namespace rtree
 
