@@ -280,23 +280,12 @@ Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
   {
     _header._parent = root;
     _nodeCount++;
-    
-    // checking if there is a element which is less/ grater than header's children
-    auto tempL = _header._parent; 
-    auto tempR = _header._parent;
-    
-    while(tempL->_childL && tempR->_childR)
-    {
-      if (tempL->_childL)
-        tempL = tempL->_childL;
-      if (tempR->_childR)
-        tempR = tempR->_childR;
-    }
 
-    if(_header._childL != tempL)
-      _header._childL = tempL;
-    if(_header._childR != tempR)
-      _header._childR = tempR;
+    if (_header._childL == nullptr || _comp(value, static_cast<Node*>(_header._childL)->_value))
+      _header._childL = valueNode;
+
+    if (_header._childR == nullptr || _comp(static_cast<Node*>(_header._childR)->_value, value))
+      _header._childR = valueNode;
   }
   return {valueNode, success};
 }

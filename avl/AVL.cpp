@@ -34,7 +34,7 @@ TreeIteratorBase::decrement()
   {
     auto p = _node->_parent;
 
-    while(p && _node == p->_childL)
+    while (p && _node == p->_childL)
     {
       _node = p;
       p = p->_parent;
