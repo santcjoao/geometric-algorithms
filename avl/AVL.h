@@ -198,7 +198,7 @@ public:
     }
   }
 
-  std::pair<iterator, bool> insert(const T&); // TODO: Atualizar left e right do header
+  std::pair<iterator, bool> insert(const T&);
 
   void insert(std::initializer_list<T> list) 
   {
@@ -206,7 +206,7 @@ public:
       insert(value);
   }
 
-  bool erase(const T& value); // TODO: Atualizar left e right do header
+  bool erase(const T& value);
 
   auto size() const
   {
@@ -305,16 +305,16 @@ template <typename T, typename C>
 auto
 Tree<T, C>::find(const T& value) const -> iterator
 {
-  auto node = _header._parent;
+  auto node = static_cast<Node*>(_header._parent);
 
   while (node)
   {
     if (_comp(value, node->_value))
-      node = (Node*)node->_childL;
+      node = static_cast<Node*>(node->_childL);
     else if (_comp(node->_value, value))
-      node = (Node*)node->_childR;
+      node = static_cast<Node*>(node->_childR);
     else
-      return iterator{(Node*)node};
+      return iterator{node};
   }
   return end();
 }
@@ -356,40 +356,79 @@ template <typename T, typename C>
 bool
 Tree<T, C>::erase(const T& value)
 {
-  auto iterator = find(value);
+  auto target_iterator = find(value);
 
-  if(iterator == end())
+  if(target_iterator == end())
     return false;
 
-  auto node = (Node*)iterator._node;
-  auto parent = node->_parent;
-  auto childL = node->_childL;
-  auto childR = node->_childR;
+  auto node = static_cast<Node*>(target_iterator._node);
 
-  if (childL && childR)
+  TreeNodeBase* rebalanceStartNode = nullptr;
+
+  if (_header._childL == node)
   {
-    auto successor = childR;
-
-    while (successor->_childL)
-      successor = (Node*)successor->_childL;
-
-    std::swap(node->_value, successor->_value);
-    parent = successor->_parent;
-    childL = successor->_childL;
-    childR = successor->_childR;
-    node = successor;
+    auto it = iterator{node};
+    ++it;
+    _header._childL = it != end() ? it._node : nullptr;
+  }
+  if (_header._childR == node)
+  {
+    auto it = iterator{node};
+    --it;
+    _header._childR = it != end() ? it._node : nullptr;
   }
 
-  auto& ref = parent ? (parent->_childL == node ? parent->_childL : parent->_childR) : _header._parent;
-  ref = childL ? childL : childR;
-  if (ref) ref->_parent = parent;
-
-  delete (Node*)node;
-
-  auto current = parent;
-  while(current)
+  if (node->_childL && node->_childR)
   {
-    auto next = current->_parent;
+    auto successor = node->_childR;
+    while (successor->_childL)
+      successor = static_cast<Node*>(successor->_childL);
+
+    // Swap
+    if (successor->_parent != node)
+    {
+      rebalanceStartNode = successor->_parent;
+
+      auto successorParent = successor->_parent;
+      successorParent->_childL = successor->_childR;
+
+      if (successor->_childR)
+        successor->_childR->_parent = successorParent;
+
+      successor->_childR = node->_childR;
+      successor->_childR->_parent = successor;
+    }
+    else
+      rebalanceStartNode = successor;
+
+    successor->_childL = node->_childL;
+    if (successor->_childL)
+      successor->_childL->_parent = successor;
+    successor->_parent = node->_parent;
+
+    auto& ref = node->_parent ? (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR) : _header._parent;
+    ref = successor;
+  }
+  else
+  {
+    rebalanceStartNode = node->_parent;
+    
+    auto child = node->_childL ? node->_childL : node->_childR;
+    auto& ref = node->_parent ? (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR) : _header._parent;
+    
+    ref = child;
+    if (child) child->_parent = node->_parent;
+  }
+
+  node->_parent = node->_childL = node->_childR = nullptr;
+  delete node;
+  _nodeCount--;
+
+  // Rebalance
+  auto current = rebalanceStartNode;
+  while (current)
+  {
+    auto next = static_cast<Node*>(current->_parent);
     
     auto& link = next ? (next->_childL == current ? next->_childL : next->_childR) : _header._parent;
     AVLHelper::balance(link);
@@ -397,29 +436,6 @@ Tree<T, C>::erase(const T& value)
     current = next;
   }
   
-  _nodeCount--;
-  
-  // checking if the removed element was any header's child
-  if(_header._childL == nullptr)
-  {
-    auto temp = _header._parent;
-    if (temp != nullptr)
-    {
-      while(temp->_childL != nullptr)
-        temp = temp->_childL;
-      _header._childL = temp;
-    }
-  }
-  if(_header._childR == nullptr)
-  {
-    auto temp = _header._parent;
-    if (temp != nullptr)
-    {
-      while(temp->_childR != nullptr)
-        temp = temp->_childR;
-      _header._childR = temp;
-    }
-  }
   return true;
 }
 
