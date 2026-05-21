@@ -258,16 +258,35 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
       for(index_t i = node->_first; i < node->_last; ++i)
       {
         if(!f(points, _indices[i])) break;
-          found++;
+        found++;
       }
 
       return found;
     }
   }
 
+  // Nó não completamente contido na AABB.
   size_t np = 0;
 
-  // Nó não completamente contido na AABB. Verifica os filhos.
+  // Verificação do conjunto nodal.
+  if (min_bounds >= node_min && max_bounds <= node_max)
+  {
+    auto median = node->_first + (node->_last - node->_first) / 2;
+
+    for(index_t i = median; i < node->_last && points[_indices[i]] == node->_splitValue; ++i)
+    {
+      if(!f(points, _indices[i])) break;
+      np++;
+    }
+
+    for(index_t i = median - 1; i >= node->_first && points[_indices[i]] == node->_splitValue; --i)
+    {
+      if(!f(points, _indices[i])) break;
+      np++;
+    }
+  }
+
+  // Verificação dos filhos.
   if (min_bounds <= node->_splitValue && node->left)
     np += query(node->left, points, bounds, f);
   
