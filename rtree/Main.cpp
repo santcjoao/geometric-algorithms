@@ -62,9 +62,7 @@ main(int argc, char** argv)
   queryTest(points, bounds);
   
   RangeTree rt{points};
-  puts("**Antes construção da RT");
   rt.build();
-  puts("**Depois construção da RT");
   puts("**RT query");
   np = rt.query(bounds, printPoint);
   printf("%zu points found\n", np);
