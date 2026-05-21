@@ -47,7 +47,7 @@ queryTest(const PointArray& points, const Bounds& bounds)
 int
 main(int argc, char** argv)
 {
-  size_t np{100};
+  size_t np{1000000};
   cg::Bounds3f bounds;
 
   bounds.inflate({0, 0, 0});
@@ -66,8 +66,6 @@ main(int argc, char** argv)
   puts("**RT query");
   np = rt.query(bounds, printPoint);
   printf("%zu points found\n", np);
-
-  rt.print();
 
   puts("Press any key to exit...");
   (void)getchar();
