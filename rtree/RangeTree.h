@@ -41,26 +41,24 @@ public:
 
   void build(const A& points)
   {
-    assert(!_indices);
-    _indices{points};
-    auto cmpFunc = [&points](index_t i, index_t j){
-      return points[i][D] < points[j][D];
-    };
-    std::sort(_indices.begin(), _indices.end(), cmpFunc);
+    assert(_indices.size() == 0);
+    _indices = IndexArray(points.size());
+    for (size_t i = 0; i < points.size(); ++i)
+    {
+      _indices[i] = i;
+    }
+    sortIndices(points);
   }
 
   void build(index_t first, index_t last, const IndexArray& indices, const A& points)
   {
-    assert(!_indices);
-    _indices{last - first};
+    assert(_indices.size() == 0);
+    _indices = IndexArray(last - first);
 
-    for(auto i = 0, j = first; i < last - first && j < last; i++, j++)
+    for(auto i = 0u, j = first; i < last - first && j < last; i++, j++)
       _indices[i] = indices[j];
     
-    auto cmpFunc = [&points](index_t i, index_t j){
-      return points[i][D] < points[j][D];
-    };
-    std::sort(_indices.begin(), _indices.end(), cmpFunc);
+    sortIndices(points);
   }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
@@ -85,7 +83,16 @@ public:
   }
 
 private:
+  using real = typename P::value_type;
   IndexArray _indices;
+
+  void sortIndices(const A& points)
+  {
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][0] < points[j][0];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
+  }
 
 }; // BBST
 
@@ -104,36 +111,28 @@ public:
   void build(const A& points)
   {
     assert(!_root);
-    _indices{points};
+    _indices = IndexArray(points.size());
+    for (size_t i = 0; i < points.size(); ++i)
+    {
+      _indices[i] = i;
+    }
 
     // sort the index array (canonic set of node) by their d-th coordinate
-    auto cmpFunc = [&points](index_t i, index_t j){
-      return points[i][D] < points[j][D];
-    };
-    std::sort(_indices.begin(), _indices.end(), cmpFunc);
-
-    index_t first = 0;
-    index_t last = (index_t)_indices.size();
-    build(_root, first, last, _indices, points);
+    sortIndices(points);
+    build(_root, 0, _indices.size(), _indices, points);
   }
 
- void build(index_t first, index_t last, const IndexArray& indices, const A& points)
- {
+  void build(index_t first, index_t last, const IndexArray& indices, const A& points)
+  {
     assert(!_root);
-    _indices{last - first};
+    _indices = IndexArray(last - first);
 
-    for (auto i = 0, j = first; i < last - first && j < last; i++, j++)
+    for (auto i = 0u, j = first; i < last - first && j < last; i++, j++)
       _indices[i] = indices[j];
 
     // sorting by d-th coordinate and building
-    auto cmpFunc = [&points](index_t i, index_t j){
-      return points[i][D] < points[j][D];
-    };
-    std::sort(_indices.begin(), _indices.end(), cmpFunc);
-    
-    index_t first = 0;
-    index_t last = (index_t)_indices.size();
-    build(_root, first, last, _indices, points);
+    sortIndices(points);
+    build(_root, 0, _indices.size(), _indices, points);
   }
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
@@ -180,8 +179,15 @@ private:
   IndexArray _indices;
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
-
+  
   size_t query(Node* node, const A& points, const Bounds& bounds, PointFunc f) const;
+  void sortIndices(const A& points)
+  {
+    auto cmpFunc = [&points](index_t i, index_t j){
+      return points[i][D - 1] < points[j][D - 1];
+    };
+    std::sort(_indices.begin(), _indices.end(), cmpFunc);
+  }
 
 }; // BBST
 
@@ -224,8 +230,8 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   auto min_bounds = bounds[0][D-1];
   auto max_bounds = bounds[1][D-1];
 
-  auto node_min = _x<D, P>(points[_indices[node->first]]);
-  auto node_max = _x<D, P>(points[_indices[node->last-1]]);
+  auto node_min = _x<D, P>(points[_indices[node->_first]]);
+  auto node_max = _x<D, P>(points[_indices[node->_last-1]]);
 
   // Nó completamente contido na AABB.
   if(min_bounds <= node_min && max_bounds >= node_max)
@@ -252,10 +258,10 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   size_t np = 0;
 
   // Nó não completamente contido na AABB. Verifica os filhos.
-  if (min_bounds <= node->pivot && node->left)
+  if (min_bounds <= node->_splitValue && node->left)
     np += query(node->left, points, bounds, f);
   
-  if(max_bounds >= node->pivot && node->right)
+  if(max_bounds >= node->_splitValue && node->right)
     np += query(node->right, points, bounds, f);
 
   return np;
