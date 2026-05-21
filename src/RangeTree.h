@@ -5,7 +5,6 @@
 #include "PointTraits.h"
 #include <functional>
 #include <numeric>
-#include <iostream>
 
 namespace tcii::cg
 { // begin namespace tcii::cg
