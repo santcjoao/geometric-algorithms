@@ -246,23 +246,8 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   // Nó completamente contido na AABB.
   if(min_bounds <= node_min && max_bounds >= node_max)
   {
-    if constexpr (D > 1)
-    {
-      if(node->associatedTree)
-        return node->associatedTree->query(points, bounds, f);
-    }
-    else
-    {
-      size_t found = 0;
-
-      for(index_t i = node->_first; i < node->_last; ++i)
-      {
-        if(!f(points, _indices[i])) break;
-        found++;
-      }
-
-      return found;
-    }
+    if(node->associatedTree)
+      return node->associatedTree->query(points, bounds, f);
   }
 
   // Nó não completamente contido na AABB.
