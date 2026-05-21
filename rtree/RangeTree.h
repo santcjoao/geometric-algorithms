@@ -273,13 +273,13 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   {
     auto median = node->_first + (node->_last - node->_first) / 2;
 
-    for(index_t i = median; i < node->_last && points[_indices[i]] == node->_splitValue; ++i)
+    for(index_t i = median; i < node->_last && _x<D, P>(points[_indices[i]]) == node->_splitValue; ++i)
     {
       if(!f(points, _indices[i])) break;
       np++;
     }
 
-    for(index_t i = median - 1; i >= node->_first && points[_indices[i]] == node->_splitValue; --i)
+    for(index_t i = median - 1; i >= node->_first && _x<D, P>(points[_indices[i]]) == node->_splitValue; --i)
     {
       if(!f(points, _indices[i])) break;
       np++;
