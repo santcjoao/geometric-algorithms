@@ -67,7 +67,7 @@ main(int argc, char** argv)
   np = rt.query(bounds, printPoint);
   printf("%zu points found\n", np);
 
-  rt.print();
+  //rt.print();
 
   puts("Press any key to exit...");
   (void)getchar();

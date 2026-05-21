@@ -279,10 +279,7 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
 
   // building associated trees
   node->associatedTree = new AssociatedTree();
-  if (node != _root)
-    node->associatedTree->build(node->_first, node->_last, indices, points);
-  else
-    node->associatedTree->build(points);
+  node->associatedTree->build(node->_first, node->_last, indices, points);
 } // BBST::build
 
 template<size_t D, typename P, typename A>
@@ -299,8 +296,23 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   // Nó completamente contido na AABB.
   if(min_bounds <= node_min && max_bounds >= node_max)
   {
-    if(node->associatedTree)
-      return node->associatedTree->query(points, bounds, f);
+    if constexpr (D > 1)
+    {
+      if(node->associatedTree)
+        return node->associatedTree->query(points, bounds, f);
+    }
+    else
+    {
+      size_t found = 0;
+
+      for(index_t i = node->_first; i < node->_last; ++i)
+      {
+        if(!f(points, _indices[i])) break;
+        found++;
+      }
+
+      return found;
+    }
   }
 
   // Nó não completamente contido na AABB.
