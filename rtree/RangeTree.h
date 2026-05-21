@@ -73,7 +73,6 @@ public:
     });
 
     auto np = 0;
-
     for (auto it = lower_it; it != upper_it; ++it)
     {
       if (!f(points, *it)) break;
@@ -151,7 +150,7 @@ private:
   {
     real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto.
 
-    // Intervalo [first, last) de pontos associados a este conjunto nodal
+    // Intervalo [first, last) de pontos associados a este conjunto canônico
     index_t _first;
     index_t _last;
 
@@ -226,10 +225,7 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
 
   // building associated trees
   node->associatedTree = new AssociatedTree();
-  if (node != _root)
-    node->associatedTree->build(node->_first, node->_last, indices, points);
-  else
-    node->associatedTree->build(points);
+  node->associatedTree->build(node->_first, node->_last, indices, points);
 } // BBST::build
 
 template<size_t D, typename P, typename A>
@@ -245,44 +241,33 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
 
   // Nó completamente contido na AABB.
   if(min_bounds <= node_min && max_bounds >= node_max)
-  {
-    if constexpr (D > 1)
-    {
-      if(node->associatedTree)
-        return node->associatedTree->query(points, bounds, f);
-    }
-    else
-    {
-      size_t found = 0;
-
-      for(index_t i = node->_first; i < node->_last; ++i)
-      {
-        if(!f(points, _indices[i])) break;
-        found++;
-      }
-
-      return found;
-    }
-  }
+    if(node->associatedTree)
+      return node->associatedTree->query(points, bounds, f);
 
   // Nó não completamente contido na AABB.
   size_t np = 0;
 
   // Verificação do conjunto nodal.
-  if (min_bounds >= node_min && max_bounds <= node_max)
+  if (min_bounds <= node->_splitValue || max_bounds >= node->_splitValue)
   {
     auto median = node->_first + (node->_last - node->_first) / 2;
 
-    for(index_t i = median; i < node->_last && _x<D, P>(points[_indices[i]]) == node->_splitValue; ++i)
+    for(index_t i = median + 1; i < node->_last && _x<D, P>(points[_indices[i]]) == node->_splitValue; ++i)
     {
-      if(!f(points, _indices[i])) break;
-      np++;
+      if(bounds.contains(points[_indices[i]]))
+      {
+        if(!f(points, _indices[i])) break;
+        np ++;
+      }
     }
 
-    for(index_t i = median - 1; i >= node->_first && _x<D, P>(points[_indices[i]]) == node->_splitValue; --i)
+    for(index_t i = median; i > node->_first && _x<D, P>(points[_indices[i]]) == node->_splitValue; --i)
     {
-      if(!f(points, _indices[i])) break;
-      np++;
+      if(bounds.contains(points[_indices[i]]))
+      {
+        if(!f(points, _indices[i])) break;
+        np ++;
+      }
     }
   }
 
