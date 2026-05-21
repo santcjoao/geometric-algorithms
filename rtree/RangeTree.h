@@ -40,6 +40,17 @@ public:
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
 
+  // Adicione no public de BBST<1, P, A>
+  void print(const A& points, const std::string& prefix = "") const
+  {
+    std::cout << prefix << "└─[Folhas D=1] Índices ordenados: { ";
+    for (index_t i = 0; i < _indices.size(); ++i)
+    {
+      std::cout << _indices[i] << "(val:" << _x<1>(points[_indices[i]]) << ") ";
+    }
+    std::cout << "}\n";
+  }
+
   void build(const A& points)
   {
     assert(_indices.size() == 0);
@@ -73,9 +84,10 @@ public:
     });
 
     auto np = 0;
-
+    //std::cout << "Lower it: " << *lower_it << std::endl << "Upper it: " << *upper_it << std::endl;
     for (auto it = lower_it; it != upper_it; ++it)
     {
+      //std::cout << "It: " << *it << std::endl;
       if (!f(points, *it)) break;
       np++;
     }
@@ -107,6 +119,17 @@ public:
   ~BBST()
   {
     delete _root;
+  }
+
+  // Adicione no public de BBST<D, P, A>
+  void print(const A& points, const std::string& prefix = "", const std::string& nodeName = "Root") const
+  {
+    if (!_root)
+    {
+      std::cout << prefix << "└─[Empty]\n";
+      return;
+    }
+    printNode(_root, points, prefix, nodeName);
   }
 
   void build(const A& points)
@@ -151,7 +174,7 @@ private:
   {
     real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto.
 
-    // Intervalo [first, last) de pontos associados a este conjunto nodal
+    // Intervalo [first, last) de pontos associados a este conjunto canônico
     index_t _first;
     index_t _last;
 
@@ -185,6 +208,36 @@ private:
 
   Node* _root{};
   IndexArray _indices;
+
+  // Adicione no private de BBST<D, P, A>
+  void printNode(Node* node, const A& points, std::string prefix, std::string nodeName) const
+  {
+    if (!node) return;
+
+    // 1. Imprime os dados do Nó Atual
+    std::cout << prefix << "├─[" << nodeName << " D=" << D << "] "
+              << "Split: " << node->_splitValue 
+              << " | Intervalo: [" << node->_first << ", " << node->_last << ") -> { ";
+    
+    for (index_t i = node->_first; i < node->_last; ++i) {
+      std::cout << _indices[i] << " ";
+    }
+    std::cout << "}\n";
+
+    // 2. Imprime a Árvore Associada (D-1) com um marcador visual forte
+    if (node->associatedTree)
+    {
+      std::cout << prefix << "│   * Associada (D=" << D - 1 << "):\n";
+      node->associatedTree->print(points, prefix + "│       ");
+    }
+
+    // 3. Desce para os filhos na mesma dimensão D
+    if (node->left || node->right)
+    {
+      if (node->left)  printNode(node->left, points, prefix + "│   ", "Left ");
+      if (node->right) printNode(node->right, points, prefix + "│   ", "Right");
+    }
+  }
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
   
@@ -313,6 +366,17 @@ public:
   {
     // do nothing
   }
+
+  
+  void print() const
+  {
+    std::cout << "\n======================================================\n";
+    std::cout << " RANGE TREE TOPOLOGY (D=" << D << ")\n";
+    std::cout << "======================================================\n";
+    _mainTree.print(_points, "", "Root");
+    std::cout << "======================================================\n\n";
+  }
+
 
   auto& points() const
   {
