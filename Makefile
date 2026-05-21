@@ -43,7 +43,7 @@ profile: all
 	@echo "Executando perfilamento massivo (R2 e R3)..."
 	@for mode in 2 3; do \
 		for cont in 0 1; do \
-			for n in 10000 25000 50000 100000 150000 200000; do \
+			for n in 10000 25000 50000 100000 150000 200000 500000 1000000; do \
 				./$(TARGET) $$mode $$n 250.0 $$cont 1 999 >> $(CSV_OUT); \
 			done \
 		done \

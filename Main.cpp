@@ -7,7 +7,13 @@
 #include <cstdlib>
 #include <vector>
 #include <random>
-#include <sys/resource.h>
+
+#ifdef _WIN32
+  #include <windows.h>
+  #include <psapi.h>
+#else
+  #include <sys/resource.h>
+#endif
 
 using namespace tcii;
 
@@ -40,10 +46,17 @@ struct BenchResult
 
 size_t getPeakRSS()
 {
-  rusage usage{};
-  if (getrusage(RUSAGE_SELF, &usage) == 0)
-    return static_cast<size_t>(usage.ru_maxrss);
-  return 0;
+  #ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS info;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info)))
+      return static_cast<size_t>(info.PeakWorkingSetSize / 1024); // Converte bytes para KB
+    return 0;
+  #else
+    rusage usage{};
+    if (getrusage(RUSAGE_SELF, &usage) == 0)
+      return static_cast<size_t>(usage.ru_maxrss); // No Linux já retorna em KB
+    return 0;
+  #endif
 }
 
 Bounds makeDomain(int mode)
