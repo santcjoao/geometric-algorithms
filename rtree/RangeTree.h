@@ -43,7 +43,7 @@ public:
   {
     assert(_indices.size() == 0);
     _indices = IndexArray(points.size());
-    for (size_t i = 0; i < points.size(); ++i)
+    for (index_t i = 0; i < points.size(); ++i)
     {
       _indices[i] = i;
     }
@@ -112,7 +112,7 @@ public:
   {
     assert(!_root);
     _indices = IndexArray(points.size());
-    for (size_t i = 0; i < points.size(); ++i)
+    for (index_t i = 0; i < points.size(); ++i)
     {
       _indices[i] = i;
     }
@@ -245,7 +245,7 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
     {
       size_t found = 0;
 
-      for(size_t i = node->first; i < node->last; ++i)
+      for(index_t i = node->_first; i < node->_last; ++i)
       {
         if(!f(points, _indices[i])) break;
           found++;
