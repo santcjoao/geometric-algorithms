@@ -5,6 +5,7 @@
 #include "PointTraits.h"
 #include <functional>
 #include <numeric>
+#include <iostream>
 
 namespace tcii::cg
 { // begin namespace tcii::cg
@@ -158,6 +159,13 @@ private:
     Node* left{};
     Node* right{};
 
+    ~Node()
+    {
+      delete associatedTree;
+      delete left;
+      delete right;
+    }
+
     Node() = default;
     
     Node(real value):
@@ -199,23 +207,24 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
   else if (last != first + 1)
   {
     // create a new node
-    auto median = last / 2;
-    node = new Node(points[indices[median]][D], first, last);
+    auto median = first + (last - first) / 2;
+    node = new Node(points[indices[median]][D - 1], first, last);
 
     // searching new first and new last
     auto nf = median + 1;
-    auto nl = median - 1;
-    for (; points[_indices[nf]][D] == points[_indices[median]][D] && nf < last; nf++);
-    for (; points[_indices[nl]][D] == points[_indices[median]][D] && nl > first; nl--);
+    auto nl = median;
+    for (; nf < last && points[_indices[nf]][D - 1] == points[_indices[median]][D - 1]; nf++);
+    for (; nl > first && points[_indices[nl - 1]][D - 1] == points[_indices[median]][D - 1]; nl--);
 
     // recursive step
     build(node->left, first, nl, indices, points);
     build(node->right, nf, last, indices, points);
   }
   else
-    node =  new Node(points[indices[first]][D], first, last);
+    node =  new Node(points[indices[first]][D - 1], first, last);
 
   // building associated trees
+  node->associatedTree = new AssociatedTree();
   if (node != _root)
     node->associatedTree->build(node->_first, node->_last, indices, points);
   else
