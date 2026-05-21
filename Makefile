@@ -27,20 +27,20 @@ $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Execução de teste rápido e único
+# Execução de teste rápido
 run: all
 	./$(TARGET) 3 50000 250.0 0 0 42
 	
-# Limpeza dos artefatos locais e diretórios criados
+# Limpeza
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf benchmarks
 
-# Executa o perfilamento em C++ e chama o Python em sequência automática
+# Executa o perfilamento
 profile: all
 	@mkdir -p $(RAW_DIR)
 	@echo "Mode,Container,N,BoxSize,Seed,NaiveCount,RTCount,Correct,NaiveMs,BuildMs,QueryMs,PeakRssKb" > $(CSV_OUT)
-	@echo "Executando perfilamento massivo (R2 e R3)..."
+	@echo "Executando perfilamento (R2 e R3)..."
 	@for mode in 2 3; do \
 		for cont in 0 1; do \
 			for n in 10000 25000 50000 100000 150000 200000 500000 1000000; do \
@@ -48,11 +48,6 @@ profile: all
 			done \
 		done \
 	done
-	@echo "Perfilamento concluído. Resultados brutos salvos em $(CSV_OUT)"
-	@$(MAKE) plot
+	@echo "Perfilamento concluído. Resultados das iterações salvos em $(CSV_OUT)"
 
-# Alvo dedicado para disparar a engine de gráficos
-plot:
-	@echo "Iniciando geração de gráficos via Python..."
-	python3 scripts/generate_plots.py
 
