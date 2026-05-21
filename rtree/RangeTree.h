@@ -204,7 +204,8 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
 {
   if (first == last)
     return;
-  else if (last != first + 1)
+
+  if (points[indices[first]][D - 1] != points[indices[last - 1]][D - 1])
   {
     // create a new node
     auto median = first + (last - first) / 2;
