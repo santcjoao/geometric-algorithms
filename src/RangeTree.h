@@ -63,6 +63,18 @@ public:
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
   {
+    bool allValidPoints = true;
+    size_t np = 0;
+
+    query(points, bounds, f, allValidPoints, np);
+
+    return np;
+  }
+
+  void query(const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
+  {
+    if (!allValidPoints) return;
+
     auto lower_it = std::lower_bound(_indices.begin(), _indices.end(), bounds[0][0], [&points](index_t i, real value){
       return _x<1>(points[i]) < value;
     });
@@ -71,14 +83,15 @@ public:
       return value < _x<1>(points[i]);
     });
 
-    auto np = 0;
     for (auto it = lower_it; it != upper_it; ++it)
     {
-      if (!f(points, *it)) break;
+      if (!f(points, *it))
+      {
+        allValidPoints = false;
+        break;
+      }
       np++;
     }
-
-    return np;
   }
 
 private:
@@ -138,7 +151,18 @@ public:
   {
     if(!_root) return 0;
 
-    return query(_root, points, bounds, f);
+    bool allValidPoints = true;
+    size_t np = 0;
+
+    query(_root, points, bounds, f, allValidPoints, np);
+
+    return np;
+  }
+
+  void query(const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
+  {
+    if(!_root || !allValidPoints) return;
+    query(_root, points, bounds, f, allValidPoints, np);
   }
 
 private:
@@ -147,7 +171,7 @@ private:
 
   struct Node
   {
-    real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto.
+    real _splitValue; // Pivô. Valor da d-ésima coordenada do ponto
 
     // Intervalo [first, last) de pontos associados a este conjunto canônico
     index_t _first;
@@ -186,7 +210,8 @@ private:
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
   
-  size_t query(Node* node, const A& points, const Bounds& bounds, PointFunc f) const;
+  void query(Node* node, const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const;
+
   void sortIndices(const A& points)
   {
     auto cmpFunc = [&points](index_t i, index_t j){
@@ -228,9 +253,9 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
 } // BBST::build
 
 template<size_t D, typename P, typename A>
-size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, PointFunc f) const
+void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
 {
-  if (!node) return 0;
+  if (!node || !allValidPoints) return;
 
   auto min_bounds = bounds[0][D-1];
   auto max_bounds = bounds[1][D-1];
@@ -238,46 +263,51 @@ size_t BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds,
   auto node_min = _x<D, P>(points[_indices[node->_first]]);
   auto node_max = _x<D, P>(points[_indices[node->_last-1]]);
 
-  // Nó completamente contido na AABB.
+  // Conjunto canônico completamente contido na AABB
   if(min_bounds <= node_min && max_bounds >= node_max)
+  {
     if(node->associatedTree)
-      return node->associatedTree->query(points, bounds, f);
+      node->associatedTree->query(points, bounds, f, allValidPoints, np);
+    
+    return;
+  }
 
-  // Nó não completamente contido na AABB.
-  size_t np = 0;
-
-  // Verificação do conjunto nodal.
+  // Conjunto nodal contido na AABB
   if (min_bounds <= node->_splitValue || max_bounds >= node->_splitValue)
   {
     auto median = node->_first + (node->_last - node->_first) / 2;
 
+    // Verificação dos pontos posteriores à mediana
     for(index_t i = median + 1; i < node->_last && _x<D, P>(points[_indices[i]]) == node->_splitValue; ++i)
     {
       if(bounds.contains(points[_indices[i]]))
       {
-        if(!f(points, _indices[i])) break;
+        if(!f(points, _indices[i])) { allValidPoints = false; return; }
         np ++;
       }
     }
 
-    for(index_t i = median; i > node->_first && _x<D, P>(points[_indices[i]]) == node->_splitValue; --i)
+    // Verificação dos pontos anteriores à mediana e da própria mediana
+    for (index_t i = median + 1; i > node->_first; )
     {
-      if(bounds.contains(points[_indices[i]]))
+      --i;
+      
+      if (_x<D, P>(points[_indices[i]]) != node->_splitValue) break;
+
+      if (bounds.contains(points[_indices[i]]))
       {
-        if(!f(points, _indices[i])) break;
-        np ++;
+        if (!f(points, _indices[i])) { allValidPoints = false; return; }
+        np++;
       }
     }
   }
 
-  // Verificação dos filhos.
+  // Verificação dos filhos
   if (min_bounds <= node->_splitValue && node->left)
-    np += query(node->left, points, bounds, f);
+    query(node->left, points, bounds, f, allValidPoints, np);
   
   if(max_bounds >= node->_splitValue && node->right)
-    np += query(node->right, points, bounds, f);
-
-  return np;
+    query(node->right, points, bounds, f, allValidPoints, np);
 } // BBST::query
 
 
