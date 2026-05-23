@@ -1,5 +1,6 @@
 benchmarks/
+scripts/
 build/
-.vscode/
 
+.vscode/
 *.exe

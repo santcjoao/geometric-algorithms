@@ -1,53 +1,83 @@
-# Configurações do Compilador
-CXX = g++
-CXXFLAGS = -std=c++20 -O3 -Wall
+# Compilação
+CXX      = g++
+CXXFLAGS = -std=c++20 -O3 
 INCLUDES = -I../include -I.
 
-# Definição de Diretórios de Saída
 BUILD_DIR = build
-RAW_DIR = benchmarks/raw
+RAW_DIR   = benchmarks/raw
+TARGET    = $(BUILD_DIR)/main.exe
 
-# Configurações dos Alvos e Artefatos
-TARGET = $(BUILD_DIR)/benchmark.exe
-SOURCES = Main.cpp
-OBJECTS = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
-CSV_OUT = $(RAW_DIR)/benchmark_results.csv
+SOURCES   = Main.cpp
+OBJECTS   = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
 
-.PHONY: all clean run profile plot
+# Parâmetros Padrão (Run)
+algo   ?= range
+func   ?= all
+struct ?= array
+dim    ?= 3
+count  ?= 50k
+box    ?= 200.0
+seed   ?= 42
+
+# Parâmetros Padrão (Profile)
+start        ?= 10k
+end          ?= 100k
+stride       ?= 10k
+out          ?= profiling.csv
+profile_algo ?= both
+
+# Configuração de Argumentos CLI
+BASE_ARGS = func=$(func) struct=$(struct) dim=$(dim) box=$(box)
+ifneq ($(seed),)
+    BASE_ARGS += seed=$(seed)
+endif
+
+RUN_ARGS     = algo=$(algo) count=$(count) $(BASE_ARGS)
+PROFILE_ARGS = algo=$(profile_algo) start=$(start) end=$(end) stride=$(stride) $(BASE_ARGS)
+
+# Regras Principais
+.PHONY: all clean run profile profile-all help
 
 all: $(TARGET)
 
-# Linkagem do Executável final dentro da pasta build
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@
 
-# Compilação dos objetos dentro da pasta build
 $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Execução de teste rápido
-run: all
-	./$(TARGET) 3 50000 250.0 0 0 42
-	
-# Limpeza
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf benchmarks
+	rm -rf $(BUILD_DIR) benchmarks
 
-# Executa o perfilamento
+# Execução e Profiling
+run: all
+	@./$(TARGET) $(RUN_ARGS) $(args)
+
 profile: all
 	@mkdir -p $(RAW_DIR)
-	@echo "Mode,Container,N,BoxSize,Seed,NaiveCount,RTCount,Correct,NaiveMs,BuildMs,QueryMs,PeakRssKb" > $(CSV_OUT)
-	@echo "Executando perfilamento (R2 e R3)..."
-	@for mode in 2 3; do \
-		for cont in 0 1; do \
-			for n in 10000 25000 50000 100000 150000 200000 500000 1000000; do \
-				./$(TARGET) $$mode $$n 250.0 $$cont 1 999 >> $(CSV_OUT); \
-			done \
+	@./$(TARGET) $(PROFILE_ARGS) $(args) > $(RAW_DIR)/$(out)
+	@echo "[+] Amostragem salva em $(RAW_DIR)/$(out)"
+
+define rodar_matriz
+	@echo "N,Dim,Box,Struct,Match,NaiveMs,RtBuildMs,RtQueryMs,RtQueryRssKb" > $(RAW_DIR)/$(1).csv
+	@for d in 2 3; do \
+		for s in array vector; do \
+			echo "[->] [Cenario: $(1)] Dimensao $$d | Estrutura $$s..."; \
+			./$(TARGET) algo=both func=$(2) start=100k end=1000k stride=100k box=$(3) dim=$$d struct=$$s seed=123456789 header=false >> $(RAW_DIR)/$(1).csv; \
 		done \
 	done
-	@echo "Perfilamento concluído. Resultados das iterações salvos em $(CSV_OUT)"
+endef
 
+profile-all: all
+	@mkdir -p $(RAW_DIR)
+	@echo "[*] Perfilamento Trilinear (100k a 1M)..."
+	$(call rodar_matriz,worst,all,2000.0)
+	$(call rodar_matriz,normal,all,200.0)
+	$(call rodar_matriz,best,all,0.0)
+	@echo "[+] Matrizes geradas em $(RAW_DIR)/"
 
+help:
+	@echo "make run algo=both func=all count=150k dim=2"
+	@echo "make profile start=10k end=100k stride=10k out=analise.csv"

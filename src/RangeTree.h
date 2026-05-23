@@ -1,7 +1,7 @@
 #ifndef __RangeTree_h
 #define __RangeTree_h
 
-#include "./include/util/Array.h"
+#include "include/util/Array.h"
 #include "PointTraits.h"
 #include <functional>
 #include <numeric>
