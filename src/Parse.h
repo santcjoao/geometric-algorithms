@@ -9,7 +9,7 @@
 #include <cstdint>
 
 enum class AlgoType { Naive, Range, Both };
-enum class FuncType { All, Early, Own };
+enum class FuncType { All, Early, Custom };
 enum class StructType { Array, Vector };
 
 struct ProcessingConfig 
@@ -70,7 +70,7 @@ inline void extractProcessing(ProcessingConfig& proc, std::string_view key, std:
   } 
   else if (key == "func") {
     if (val == "early") proc.func = FuncType::Early;
-    else if (val == "own") proc.func = FuncType::Own;
+    else if (val == "custom") proc.func = FuncType::Custom;
     else proc.func = FuncType::All;
   }
 }

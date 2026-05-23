@@ -17,7 +17,7 @@ Este repositório disponibiliza alvos Makefile para executar testes e coletar m�
 - `func = all | early | own`
     - `all`: O predicado retorna verdadeiro para todos os pontos contidos na janela geométrica (coleta total).
     - `early`: O predicado retorna falso no primeiro ponto encontrado, acionando a interrupção prematura da busca (early exit).
-    - `own`: O predicado interrompe a busca após capturar estritamente 10 pontos de índice par, testando uma condição de parada customizada.
+    - `custom`: O predicado é dedicado para customização da função, passível de uso para testes específicos.
 
 - `struct = array | vector`
     - `array`: Armazena os dados sintéticos utilizando o contêiner customizado `cg::Array`.

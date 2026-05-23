@@ -12,7 +12,7 @@ auto funcEarly = [](const auto&, size_t) {
   return false; 
 };
 
-auto funcOwn = [](const auto&, size_t pid) { 
+auto funcCustom = [](const auto&, size_t pid) { 
   static size_t processedNeighbors = 0; 
   return (pid % 2 == 0) && (++processedNeighbors < 10); 
 };
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   };
 
   if (cfg.proc.func == FuncType::Early)    dispatch(funcEarly);
-  else if (cfg.proc.func == FuncType::Own) dispatch(funcOwn);
+  else if (cfg.proc.func == FuncType::Custom) dispatch(funcCustom);
   else                                     dispatch(funcAll);
 
   return EXIT_SUCCESS;
