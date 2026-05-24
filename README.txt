@@ -1,3 +1,22 @@
+# Prova 1: Range Tree - Tópicos em Computação II 2026
+
+## Autores
+
+- Arthur Barbosa de Andrade
+- João Pedro Santana de Carvalho
+- Nathan de Almeida Rezende
+
+## Status das Atividades
+
+- A1 (Estrutura do nó de uma BBST de dimensão l > 1):Concluída
+- A2 (Métodos de construção e consulta multidimensional): Concluída
+- A3 (Rotinas de teste da RT com R2, R3, Array nativo e std::vector): Concluída
+- A4 (Vídeo gravado demonstrando execução e código): Concluída
+
+## Link do vídeo de explicação no Google Drive
+
+https://drive.google.com/file/d/1b00jLvEi68rPXZpvWSDJ6xlli46_JOsm/view?usp=sharing
+
 # Guia de Execução CLI
 
 Este repositório disponibiliza alvos Makefile para executar testes e coletar métricas de desempenho.
@@ -14,7 +33,7 @@ Este repositório disponibiliza alvos Makefile para executar testes e coletar m�
     - `range`: Constrói a estrutura espacial e consulta apenas a Range Tree.
     - `both`: Executa ambos os algoritmos em sequência e valida a correspondência (integridade) dos resultados.
 
-- `func = all | early | own`
+- `func = all | early | custom`
     - `all`: O predicado retorna verdadeiro para todos os pontos contidos na janela geométrica (coleta total).
     - `early`: O predicado retorna falso no primeiro ponto encontrado, acionando a interrupção prematura da busca (early exit).
     - `custom`: O predicado é dedicado para customização da função, passível de uso para testes específicos.
