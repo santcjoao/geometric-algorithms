@@ -40,7 +40,8 @@ struct TestReport {
   bool correspondenceMatch = false;
 };
 
-inline size_t getPeakMemory() {
+inline size_t getPeakMemory()
+{
 #ifdef _WIN32
   PROCESS_MEMORY_COUNTERS info;
   if (GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info)))
@@ -54,7 +55,8 @@ inline size_t getPeakMemory() {
 #endif
 }
 
-inline void printConsole(const TestReport& r) {
+inline void printConsole(const TestReport& r)
+{
   std::puts("--------------------------------------------------");
   std::printf(" REPORT [%s | %zuD]\n", 
               (r.container == StructType::Vector ? "std::vector" : "cg::Array"), r.dimension);
@@ -62,12 +64,12 @@ inline void printConsole(const TestReport& r) {
   std::printf(" Dataset Volume        : %zu points\n", r.pointVolume);
   std::printf(" Query Window (AABB)   : %g\n", r.boxSize);
   
-  if (r.naive.query.timeMs > 0.0) {
+  if (r.naive.query.timeMs > 0.0)
     std::printf(" Naive Query           : %.4f ms (Found: %zu)\n", 
                 r.naive.query.timeMs, r.naive.pointsFound);
-  }
   
-  if (r.rangeTree.query.timeMs > 0.0) {
+  if (r.rangeTree.query.timeMs > 0.0)
+  {
     std::printf(" Range Tree Build      : %.4f ms [Peak RSS: %zu KB]\n", 
                 r.rangeTree.build.timeMs, r.rangeTree.build.memoryPeakRssKb);
     std::printf(" Range Tree Query      : %.4f ms (Found: %zu) [Peak RSS: %zu KB]\n", 
@@ -78,10 +80,11 @@ inline void printConsole(const TestReport& r) {
   std::puts("--------------------------------------------------");
 }
 
-inline void printCsv(const TestReport& r, bool printHeader = false) {
-  if (printHeader) {
+inline void printCsv(const TestReport& r, bool printHeader = false)
+{
+  if (printHeader)
     std::puts("N,Dim,Box,Struct,Match,NaiveMs,RtBuildMs,RtQueryMs,RtQueryRssKb");
-  }
+
   std::printf("%zu,%zu,%g,%d,%d,%.4f,%.4f,%.4f,%zu\n",
               r.pointVolume, 
               r.dimension, 
@@ -97,17 +100,18 @@ inline void printCsv(const TestReport& r, bool printHeader = false) {
 template <typename Container, typename Predicate>
 size_t queryNaive(const Container& points, const Bounds& box, Predicate f) {
   size_t count = 0;
-  for (size_t i = 0; i < points.size(); ++i) {
+  for (size_t i = 0; i < points.size(); ++i)
     if (box.contains(points[i])) {
       count++;
       if (!f(points[i], i)) break;
     }
-  }
+
   return count;
 }
 
 template <typename Container, typename TreeType, typename Predicate>
-TestReport executeCore(size_t volume, const Config& cfg, Predicate p) {
+TestReport executeCore(size_t volume, const Config& cfg, Predicate p)
+{
   TestReport report;
   report.pointVolume = volume;
   report.dimension   = cfg.gen.dim;
@@ -120,7 +124,8 @@ TestReport executeCore(size_t volume, const Config& cfg, Predicate p) {
   Container points(volume);
   for (size_t i = 0; i < volume; ++i) points[i] = rawPoints[i];
 
-  if (cfg.proc.algo == AlgoType::Naive || cfg.proc.algo == AlgoType::Both) {
+  if (cfg.proc.algo == AlgoType::Naive || cfg.proc.algo == AlgoType::Both)
+  {
     auto t0 = std::chrono::steady_clock::now();
     report.naive.pointsFound = queryNaive(points, box, p);
     auto t1 = std::chrono::steady_clock::now();
@@ -128,7 +133,8 @@ TestReport executeCore(size_t volume, const Config& cfg, Predicate p) {
     report.naive.query.memoryPeakRssKb = getPeakMemory();
   }
 
-  if (cfg.proc.algo == AlgoType::Range || cfg.proc.algo == AlgoType::Both) {
+  if (cfg.proc.algo == AlgoType::Range || cfg.proc.algo == AlgoType::Both)
+  {
     TreeType tree{points};
     
     auto t0 = std::chrono::steady_clock::now();

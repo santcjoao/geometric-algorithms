@@ -12,14 +12,12 @@ enum class AlgoType { Naive, Range, Both };
 enum class FuncType { All, Early, Custom };
 enum class StructType { Array, Vector };
 
-struct ProcessingConfig 
-{
+struct ProcessingConfig {
   AlgoType algo = AlgoType::Both;
   FuncType func = FuncType::All;
 };
 
-struct GenerationConfig 
-{
+struct GenerationConfig {
   StructType container = StructType::Array;
   size_t count         = 50000;
   size_t dim           = 3;
@@ -27,15 +25,13 @@ struct GenerationConfig
   uint64_t seed        = 123456789ULL;
 };
 
-struct IterationConfig 
-{
+struct IterationConfig {
   size_t start  = 0;
   size_t end    = 0;
   size_t stride = 0;
 };
 
-struct Config 
-{
+struct Config {
   ProcessingConfig proc;
   GenerationConfig gen;
   std::optional<IterationConfig> iter;
@@ -47,7 +43,8 @@ inline size_t parseK(std::string_view val)
 {
   if (val.empty()) return 0;
   size_t multiplier = 1;
-  if (val.back() == 'k' || val.back() == 'K') {
+  if (val.back() == 'k' || val.back() == 'K')
+  {
     multiplier = 1000;
     val.remove_suffix(1);
   }
@@ -78,10 +75,10 @@ inline void extractProcessing(ProcessingConfig& proc, std::string_view key, std:
 
 inline void extractGeneration(GenerationConfig& gen, std::string_view key, std::string_view val)
 {
-  if (key == "struct") {
+  if (key == "struct")
     if (val == "vector") gen.container = StructType::Vector;
     else gen.container = StructType::Array;
-  }
+
   else if (key == "count") gen.count = parseK(val);
   else if (key == "dim")   gen.dim = parseK(val);
   else if (key == "box")   gen.box = parseFloat(val);
@@ -90,7 +87,8 @@ inline void extractGeneration(GenerationConfig& gen, std::string_view key, std::
 
 inline void validateGeneration(GenerationConfig& gen)
 {
-  if (gen.dim > 3) {
+  if (gen.dim > 3)
+  {
     std::cout << "[AVISO] Dimensão " << gen.dim << " excede o limite. Clamping para 3 efetuado.\n";
     gen.dim = 3;
   }
@@ -99,8 +97,8 @@ inline void validateGeneration(GenerationConfig& gen)
 
 inline void extractIteration(IterationConfig& iter, bool& hasIter, std::string_view key, std::string_view val)
 {
-  if (key == "start")  { iter.start = parseK(val); hasIter = true; }
-  else if (key == "end")    { iter.end = parseK(val); hasIter = true; }
+  if (key == "start")       { iter.start = parseK(val); hasIter = true;  }
+  else if (key == "end")    { iter.end = parseK(val); hasIter = true;    }
   else if (key == "stride") { iter.stride = parseK(val); hasIter = true; }
 }
 
@@ -108,14 +106,14 @@ inline std::optional<IterationConfig> validateIteration(const IterationConfig& i
 {
   if (!hasIter) return std::nullopt;
 
-  if (proc.algo != AlgoType::Both) {
+  if (proc.algo != AlgoType::Both)
+  {
     std::cout << "[AVISO] Profiling ignorado. A iteracao exige 'algo=both'.\n";
     return std::nullopt;
   }
 
-  if (iter.start < iter.end && iter.stride > 0) {
+  if (iter.start < iter.end && iter.stride > 0)
     return iter;
-  }
 
   return std::nullopt;
 }
@@ -139,9 +137,8 @@ inline Config parseArguments(int argc, char** argv)
     extractProcessing(cfg.proc, key, val);
     extractGeneration(cfg.gen, key, val);
     extractIteration(tempIter, hasIter, key, val);
-    if (key == "header") {
+    if (key == "header")
       if (val == "false" || val == "0") cfg.printHeader = false;
-    }
   }
 
   validateGeneration(cfg.gen);

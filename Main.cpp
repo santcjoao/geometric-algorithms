@@ -21,11 +21,12 @@ int main(int argc, char** argv)
 {
   Config cfg = parseArguments(argc, argv);
 
-  auto dispatch = [&](auto func) 
-  {
-    if (cfg.iter) {
+  auto dispatch = [&](auto func) {
+    if (cfg.iter)
+    {
       bool printHdr = cfg.printHeader;
-      for (size_t n = cfg.iter->start; n <= cfg.iter->end; n += cfg.iter->stride) {
+      for (size_t n = cfg.iter->start; n <= cfg.iter->end; n += cfg.iter->stride)
+      {
         Benchmarking::TestReport r;
         if (cfg.gen.container == StructType::Vector)
           r = Benchmarking::executeCore<std::vector<Point>, RangeTreeVector>(n, cfg, func);
@@ -35,7 +36,9 @@ int main(int argc, char** argv)
         Benchmarking::printCsv(r, printHdr);
         printHdr = false;
       }
-    } else {
+    }
+    else
+    {
       Benchmarking::TestReport r;
       if (cfg.gen.container == StructType::Vector)
         r = Benchmarking::executeCore<std::vector<Point>, RangeTreeVector>(cfg.gen.count, cfg, func);
@@ -46,9 +49,9 @@ int main(int argc, char** argv)
     }
   };
 
-  if (cfg.proc.func == FuncType::Early)    dispatch(funcEarly);
+  if (cfg.proc.func == FuncType::Early)       dispatch(funcEarly);
   else if (cfg.proc.func == FuncType::Custom) dispatch(funcCustom);
-  else                                     dispatch(funcAll);
+  else                                        dispatch(funcAll);
 
   return EXIT_SUCCESS;
 }

@@ -13,12 +13,17 @@ using Point = tcii::cg::Vec3f;
 using Bounds = tcii::cg::Bounds3f;
 using PointArray = tcii::cg::Array<Point>;
 
-inline PointArray generatePoints(size_t n, size_t dim, uint64_t seed) {
+inline PointArray generatePoints(size_t n, size_t dim, uint64_t seed)
+{
   Bounds domain;
-  if (dim == 2) {
+
+  if (dim == 2)
+  {
     domain.inflate({0.0f, 0.0f, 0.0f});
     domain.inflate({1000.0f, 1000.0f, 0.0f});
-  } else {
+  }
+  else
+  {
     domain.inflate({-1000.0f, -1000.0f, -1000.0f});
     domain.inflate({1000.0f, 1000.0f, 1000.0f});
   }
@@ -29,7 +34,8 @@ inline PointArray generatePoints(size_t n, size_t dim, uint64_t seed) {
   std::uniform_real_distribution<float> distY{domain[0].y, domain[1].y};
   std::uniform_real_distribution<float> distZ{domain[0].z, domain[1].z};
 
-  for (size_t i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i)
+  {
     points[i].x = distX(gen);
     points[i].y = distY(gen);
     points[i].z = (dim == 2) ? 0.0f : distZ(gen);
@@ -37,12 +43,16 @@ inline PointArray generatePoints(size_t n, size_t dim, uint64_t seed) {
   return points;
 }
 
-inline Bounds calculateBox(size_t dim, float size) {
+inline Bounds calculateBox(size_t dim, float size)
+{
   Bounds box;
-  if (dim == 2) {
+  if (dim == 2)
+  {
     box.inflate({500.0f - size / 2.0f, 500.0f - size / 2.0f, 0.0f});
     box.inflate({500.0f + size / 2.0f, 500.0f + size / 2.0f, 0.0f});
-  } else {
+  }
+  else
+  {
     box.inflate({-size / 2.0f, -size / 2.0f, -size / 2.0f});
     box.inflate({size / 2.0f, size / 2.0f, size / 2.0f});
   }
