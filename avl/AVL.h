@@ -247,13 +247,11 @@ public:
   
   auto rbegin() const
   {
-    // TODO: Check
-    return reverse_iterator(begin());
+    return reverse_iterator(end());
   }
   auto rend() const
   {
-    // TODO: Check
-    return reverse_iterator(end());
+    return reverse_iterator(begin());
   }
 
 private:
