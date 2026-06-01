@@ -8,6 +8,9 @@ namespace tcii::avl
 void
 TreeIteratorBase::increment()
 {
+  if (_node->_height == -1)
+    return;
+
   if (_node->_childR)
     for (_node = _node->_childR; _node->_childL;)
       _node = _node->_childL;
@@ -15,7 +18,7 @@ TreeIteratorBase::increment()
   {
     auto p = _node->_parent;
 
-    while (p && _node == p->_childR)
+    while (p->_height != -1 && _node == p->_childR)
     {
       _node = p;
       p = p->_parent;
@@ -27,6 +30,12 @@ TreeIteratorBase::increment()
 void
 TreeIteratorBase::decrement()
 {
+  if (_node->_height == -1)
+  {
+    _node = _node->_childR;
+    return;
+  }
+
   if (_node->_childL)
     for (_node = _node->_childL; _node->_childR;)
       _node = _node->_childR;
@@ -34,7 +43,7 @@ TreeIteratorBase::decrement()
   {
     auto p = _node->_parent;
 
-    while (p && _node == p->_childL)
+    while (p->_height != -1 && _node == p->_childL)
     {
       _node = p;
       p = p->_parent;

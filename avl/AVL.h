@@ -10,7 +10,7 @@ namespace tcii::avl
 { // begin namespace tcii::avl
 
   // forward declaration da Tree
-template <typename T, typename C = std::less<T>>
+template <typename T, typename C>
 class Tree;
 
 struct TreeNodeBase
@@ -27,11 +27,11 @@ struct TreeNodeBase
   }
 
   TreeNodeBase(int height):
-    _height{height}
+    _height{height},
+    _parent{nullptr}
   {
     // do nothing
   }
-protected:
   ~TreeNodeBase() = default;
 
 }; // TreeNodeBase
@@ -166,7 +166,8 @@ public:
     return temp;
   }
 
-  friend class Tree<T, C>;
+  template <typename U, typename C>
+  friend class Tree;
 }; // TreeIterator
 
 template <typename T, typename C = std::less<T>>
@@ -180,7 +181,7 @@ public:
   Tree(C comp = C{}):
     _comp{comp}
   {
-    // do nothing
+    _header._childL = _header._childR = &_header;
   }
 
   ~Tree()
@@ -192,8 +193,9 @@ public:
   {
     if (_header._parent)
     {
-      delete _header._parent;
+      delete static_cast<Node*>(_header._parent);
       _header._parent = nullptr;
+      _header._childL = _header._childR = &_header;
       _nodeCount = 0;
     }
   }
@@ -220,7 +222,7 @@ public:
 
   void iterate(IterFunc func) const
   {
-    iterate(_header._parent, func);
+    iterate(static_cast<Node*>(_header._parent), func);
   }
 
   auto height() const
@@ -233,7 +235,7 @@ public:
     return (Node*)_header._childL;
   }
 
-  auto end() const
+  iterator end() const
   {
     return (Node*)&_header;
   }
@@ -247,7 +249,7 @@ public:
   
   auto rbegin() const
   {
-    return reverse_iterator(end());
+    return reverse_iterator(iterator(end()->_node->_childR));
   }
   auto rend() const
   {
@@ -268,10 +270,10 @@ private:
 
 template <typename T, typename C>
 auto
-Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
+Tree<T, C>::insert(const T& value) -> std::pair<Tree<T, C>::iterator, bool>
 {
   Node* valueNode;
-  auto root = insert(_header._parent, nullptr, value, valueNode, _comp);
+  auto root = insert(static_cast<Node*>(_header._parent), &_header, value, valueNode, _comp);
   auto success = bool(root);
 
   if (success)
@@ -279,10 +281,10 @@ Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
     _header._parent = root;
     _nodeCount++;
 
-    if (_header._childL == nullptr || _comp(value, static_cast<Node*>(_header._childL)->_value))
+    if (_header._childL == &_header || _comp(value, static_cast<Node*>(_header._childL)->_value))
       _header._childL = valueNode;
 
-    if (_header._childR == nullptr || _comp(static_cast<Node*>(_header._childR)->_value, value))
+    if (_header._childR == &_header || _comp(static_cast<Node*>(_header._childR)->_value, value))
       _header._childR = valueNode;
   }
   return {valueNode, success};
@@ -290,7 +292,7 @@ Tree<T, C>::insert(const T& value) -> std::pair<iterator, bool>
 
 template <typename T, typename C>
 auto
-Tree<T, C>::find(const T& value) const -> iterator
+Tree<T, C>::find(const T& value) const -> Tree<T, C>::iterator
 {
   auto node = static_cast<Node*>(_header._parent);
 
@@ -308,10 +310,10 @@ Tree<T, C>::find(const T& value) const -> iterator
 
 template <typename T, typename C>
 TreeNode<T>*
-Tree<T, C>::insert(Node* node,
+Tree<T, C>::insert(Tree<T, C>::Node* node,
   TreeNodeBase* parent,
   const T& value,
-  Node*& valueNode,
+  Tree<T, C>::Node*& valueNode,
   C& comp)
 {
   if (!node)
@@ -356,13 +358,13 @@ Tree<T, C>::erase(const T& value)
   {
     auto it = iterator{node};
     ++it;
-    _header._childL = it != end() ? it._node : nullptr;
+    _header._childL = it != end() ? it._node : &_header;
   }
   if (_header._childR == node)
   {
     auto it = iterator{node};
     --it;
-    _header._childR = it != end() ? it._node : nullptr;
+    _header._childR = it != end() ? it._node : &_header;
   }
 
   if (node->_childL && node->_childR)
@@ -393,7 +395,9 @@ Tree<T, C>::erase(const T& value)
       successor->_childL->_parent = successor;
     successor->_parent = node->_parent;
 
-    auto& ref = node->_parent ? (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR) : _header._parent;
+    auto& ref = (node == _header._parent) // alteração
+              ? _header._parent 
+              : (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR);
     ref = successor;
   }
   else
@@ -401,8 +405,9 @@ Tree<T, C>::erase(const T& value)
     rebalanceStartNode = node->_parent;
     
     auto child = node->_childL ? node->_childL : node->_childR;
-    auto& ref = node->_parent ? (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR) : _header._parent;
-    
+    auto& ref = (node == _header._parent) // alteração 
+              ? _header._parent 
+              : (node->_parent->_childL == node ? node->_parent->_childL : node->_parent->_childR);
     ref = child;
     if (child) child->_parent = node->_parent;
   }
@@ -413,11 +418,13 @@ Tree<T, C>::erase(const T& value)
 
   // Rebalance
   auto current = rebalanceStartNode;
-  while (current)
+  while (current && current->_height != -1) // alteração
   {
     auto next = static_cast<Node*>(current->_parent);
     
-    auto& link = next ? (next->_childL == current ? next->_childL : next->_childR) : _header._parent;
+    auto& link = (current == _header._parent) // alteração
+                 ? _header._parent 
+                 : (next->_childL == current ? next->_childL : next->_childR);
     AVLHelper::balance(link);
     
     current = next;
