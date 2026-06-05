@@ -39,6 +39,24 @@ public:
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
 
+  BBST() = default;
+
+  BBST(BBST&& other) noexcept:
+    _indices{std::move(other._indices)}
+  {
+    // do nothing
+  }
+
+  BBST& operator =(BBST&& other) noexcept
+  {
+    if (this != &other)
+    {
+      this->~BBST();
+      _indices = std::move(other._indices); 
+    }
+    return *this;
+  }
+
   void build(const A& points)
   {
     assert(_indices.size() == 0);
@@ -114,6 +132,26 @@ class BBST
 public:
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
+
+  BBST() = default;
+
+  BBST(BBST&& other) noexcept:
+    _root{std::move(other._root)},
+    _indices{std::move(other._indices)}
+  {
+    // do nothing
+  }
+
+  BBST& operator =(BBST&& other) noexcept
+  {
+    if (this != &other)
+    {
+      this->~BBST();
+      _root = std::exchange(other._root, nullptr);
+      _indices = std::move(other._indices); 
+    }
+    return *this;
+  }
 
   ~BBST()
   {
@@ -317,7 +355,7 @@ template <typename P, typename A>
 class RangeTree
 {
 public:
-  constexpr static auto D = point_dim_v<P>;
+  constexpr static auto D = point_dim_v<P>; // TODO: concept P must have point_dim_v
 
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
@@ -327,6 +365,26 @@ public:
   {
     // do nothing
   }
+
+  RangeTree(RangeTree&& other) noexcept:
+    _points{std::move(other._points)},
+    _mainTree{std::move(other._mainTree)}
+  {
+    // do nothing
+  }
+
+  RangeTree& operator =(RangeTree&& other) noexcept
+  {
+    if (this != &other)
+    {
+      this->~RangeTree();
+      _points = std::exchange(other._points, A{}); // TODO: concept A must have move assign op/ constructor
+      _mainTree = std::move(other._mainTree);
+    }
+    return *this;
+  }
+
+  ~RangeTree() = default;
 
   auto& points() const
   {
@@ -344,7 +402,7 @@ public:
   }
 
 private:
-  const A& _points;
+  const A _points;
   rtree::BBST<D, P, A> _mainTree;
 
 }; // RangeTree
