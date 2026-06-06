@@ -12,6 +12,23 @@ namespace tcii::cg
 namespace rtree
 { // begin namespace rtree
 
+template <typename P>
+concept is_point = requires(P p, size_t i)
+{
+  typename P::value_type;
+  { p[i] } -> std::is_convertible<typename P::value_type>;
+  typename PointTraits<P>;
+  typename PointTraits<P>::dim;
+  typename PointTraits<P>::Bounds;
+}
+
+template <typename P, typename A>
+concept is_point_collection = requires(A collection, size_t i)
+{
+  { collection[i] } -> std::is_convertible<P>;
+  collection.size();
+}
+
 using index_t = unsigned;
 using IndexArray = Array<index_t>;
 
@@ -352,6 +369,7 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
 } // end namespace rtree
 
 template <typename P, typename A>
+requires is_point<P> && is_point_collection<P, A>
 class RangeTree
 {
 public:
