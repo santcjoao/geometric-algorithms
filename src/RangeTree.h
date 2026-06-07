@@ -5,6 +5,8 @@
 #include "PointTraits.h"
 #include <functional>
 #include <numeric>
+#include <type_traits>
+#include <concepts>
 
 namespace tcii::cg
 { // begin namespace tcii::cg
@@ -51,7 +53,7 @@ public:
   {
     if (this != &other)
     {
-      this->~BBST();
+      this->~BBST(); // Isso gera erro aparentemente.
       _indices = std::move(other._indices); 
     }
     return *this;
@@ -146,7 +148,7 @@ public:
   {
     if (this != &other)
     {
-      this->~BBST();
+      this->~BBST(); // ERRO?
       _root = std::exchange(other._root, nullptr);
       _indices = std::move(other._indices); 
     }
@@ -348,33 +350,33 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
     query(node->right, points, bounds, f, allValidPoints, np);
 } // BBST::query
 
-
 } // end namespace rtree
 
 template <typename P>
 concept is_point = requires(P p, size_t i)
 {
   typename P::value_type;
-  { p[i] } -> std::is_convertible<typename P::value_type>;
-  typename PointTraits<P>;
-  typename PointTraits<P>::dim;
+  requires std::is_floating_point_v<typename P::value_type>;
+  { p[i] } -> std::convertible_to<typename P::value_type>;
+  PointTraits<P>::dim;
   typename PointTraits<P>::Bounds;
-  constexpr size_t point_dim_v<P>;
-}
+  requires point_dim_v<P> == PointTraits<P>::dim;
+};
 
 template <typename P, typename A>
 concept is_point_collection = requires(A collection, size_t i)
 {
-  { collection[i] } -> std::is_convertible<P>;
+  { collection[i] } -> std::convertible_to<P>;
   collection.size();
-}
+  requires std::movable<A>; // Garantee move semantic for performance
+};
 
 template <typename P, typename A>
 requires is_point<P> && is_point_collection<P, A>
 class RangeTree
 {
 public:
-  constexpr static auto D = point_dim_v<P>; // TODO: concept P must have point_dim_v
+  constexpr static auto D = point_dim_v<P>;
 
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
@@ -396,8 +398,8 @@ public:
   {
     if (this != &other)
     {
-      this->~RangeTree();
-      _points = std::exchange(other._points, A{}); // TODO: concept A must have move assign op/ constructor
+      this->~RangeTree(); // ERRO ?
+      _points = std::move(other._points);
       _mainTree = std::move(other._mainTree);
     }
     return *this;
