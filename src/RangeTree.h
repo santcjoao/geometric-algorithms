@@ -138,7 +138,7 @@ public:
   BBST() = default;
 
   BBST(BBST&& other) noexcept:
-    _root{std::move(other._root)},
+    _root{std::exchange(other._root, nullptr)},
     _indices{std::move(other._indices)}
   {
     // do nothing
