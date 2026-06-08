@@ -25,6 +25,10 @@ $(OBJ_DIR):
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
+	@echo "Limpeza concluída."
+
+type ?= all
+functor ?= all
 
 run: all
-	./$(TARGET)
+	./$(TARGET) $(type) $(functor)
