@@ -1,7 +1,7 @@
 #ifndef __ParticleSystem_h
 #define __ParticleSystem_h
 
-#include "Actor.h"
+#include "physx/Actor.h"
 #include "ParticleBuffer.h"
 
 namespace tcii::physx
