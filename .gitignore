@@ -1,13 +1,27 @@
-﻿# Add any directories, files, or patterns you don't want to be tracked by version control
-.vs/
-x64/
-*.ilk
-*.pdb
-*.vcxproj.user
-*.exe
-*.iobj
-*.ipdb
+# Compiled Object files
 *.o
 *.obj
 
+# Executables
+*.exe
+*.out
+*.app
+avl/avl
+
+# Directories created by build systems
+obj/
+bin/
+build/
+x64/
+
+# IDEs, Editors and OS files
+.vs/
 .vscode/
+.idea/
+*.swp
+*.suo
+*.ipdb
+*.iobj
+*.ilk
+*.pdb
+Thumbs.db

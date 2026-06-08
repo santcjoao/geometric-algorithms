@@ -14,21 +14,22 @@ TARGET = avl
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	@$(CXX) $(CXXFLAGS) $^ -o $@
 	@echo "Compilação concluída."
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo "Compilando $<..."
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	@mkdir -p $(OBJ_DIR)
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	@rm -rf $(OBJ_DIR) $(TARGET)
 	@echo "Limpeza concluída."
 
 type ?= all
 functor ?= all
 
 run: all
-	./$(TARGET) $(type) $(functor)
+	@./$(TARGET) $(type) $(functor)
