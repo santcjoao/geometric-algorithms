@@ -83,17 +83,15 @@ public:
 
   size_t query(const A& points, const Bounds& bounds, PointFunc f) const
   {
-    bool allValidPoints = true;
     size_t np = 0;
 
-    query(points, bounds, f, allValidPoints, np);
+    query(points, bounds, f, np);
 
     return np;
   }
 
-  void query(const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
+  void query(const A& points, const Bounds& bounds, PointFunc f, size_t& np) const
   {
-    if (!allValidPoints) return;
 
     auto lower_it = std::lower_bound(_indices.begin(), _indices.end(), bounds[0][0], [&points](index_t i, real value){
       return _x<1>(points[i]) < value;
@@ -105,11 +103,7 @@ public:
 
     for (auto it = lower_it; it != upper_it; ++it)
     {
-      if (!f(points, *it))
-      {
-        allValidPoints = false;
-        break;
-      }
+      if (!f(points, *it)) continue;
       np++;
     }
   }
@@ -191,18 +185,17 @@ public:
   {
     if(!_root) return 0;
 
-    bool allValidPoints = true;
     size_t np = 0;
 
-    query(_root, points, bounds, f, allValidPoints, np);
+    query(_root, points, bounds, f, np);
 
     return np;
   }
 
-  void query(const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
+  void query(const A& points, const Bounds& bounds, PointFunc f, size_t& np) const
   {
-    if(!_root || !allValidPoints) return;
-    query(_root, points, bounds, f, allValidPoints, np);
+    if(!_root) return;
+    query(_root, points, bounds, f, np);
   }
 
 private:
@@ -250,7 +243,7 @@ private:
 
   void build (Node*& node, index_t first, index_t last, const IndexArray& indices, const A& points);
   
-  void query(Node* node, const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const;
+  void query(Node* node, const A& points, const Bounds& bounds, PointFunc f, size_t& np) const;
 
   void sortIndices(const A& points)
   {
@@ -293,9 +286,9 @@ void BBST<D, P, A> :: build(Node*& node, index_t first, index_t last, const Inde
 } // BBST::build
 
 template<size_t D, typename P, typename A>
-void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, PointFunc f, bool& allValidPoints, size_t& np) const
+void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, PointFunc f, size_t& np) const
 {
-  if (!node || !allValidPoints) return;
+  if (!node) return;
 
   auto min_bounds = bounds[0][D-1];
   auto max_bounds = bounds[1][D-1];
@@ -307,7 +300,7 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
   if(min_bounds <= node_min && max_bounds >= node_max)
   {
     if(node->associatedTree)
-      node->associatedTree->query(points, bounds, f, allValidPoints, np);
+      node->associatedTree->query(points, bounds, f, np);
     
     return;
   }
@@ -322,7 +315,7 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
     {
       if(bounds.contains(points[_indices[i]]))
       {
-        if(!f(points, _indices[i])) { allValidPoints = false; return; }
+        if(!f(points, _indices[i])) continue;
         np ++;
       }
     }
@@ -336,7 +329,7 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
 
       if (bounds.contains(points[_indices[i]]))
       {
-        if (!f(points, _indices[i])) { allValidPoints = false; return; }
+        if (!f(points, _indices[i])) continue;
         np++;
       }
     }
@@ -344,10 +337,10 @@ void BBST<D, P, A> :: query(Node* node, const A& points, const Bounds& bounds, P
 
   // Verificação dos filhos
   if (min_bounds <= node->_splitValue && node->left)
-    query(node->left, points, bounds, f, allValidPoints, np);
+    query(node->left, points, bounds, f, np);
   
   if(max_bounds >= node->_splitValue && node->right)
-    query(node->right, points, bounds, f, allValidPoints, np);
+    query(node->right, points, bounds, f, np);
 } // BBST::query
 
 } // end namespace rtree
