@@ -21,7 +21,7 @@ struct TreeNodeBase {
     // do nothing
   }
 
-  TreeNodeBase(int height) : _height{height}, _parent{nullptr} {
+  TreeNodeBase(int height) : _parent{nullptr}, _height{height} {
     // do nothing
   }
   ~TreeNodeBase() = default;
@@ -180,9 +180,7 @@ public:
 
   auto contains(const T &value) const { return find(value) != end(); }
 
-  auto rbegin() const {
-    return reverse_iterator(iterator(end()->_node->_childR));
-  }
+  auto rbegin() const { return reverse_iterator(end()); }
   auto rend() const { return reverse_iterator(begin()); }
 
 private:
