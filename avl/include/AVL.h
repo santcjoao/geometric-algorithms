@@ -117,7 +117,7 @@ public:
     return temp;
   }
 
-  auto operator--() {
+  auto& operator--() {
     decrement();
     return *this;
   }
