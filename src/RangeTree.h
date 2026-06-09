@@ -386,27 +386,11 @@ public:
     // do nothing
   }
 
-  /* RangeTree(RangeTree&& other) noexcept:
-    _points{std::move(other._points)},
-    _mainTree{std::move(other._mainTree)}
-  {
-    // do nothing
-  }
-
-  RangeTree& operator =(RangeTree&& other) noexcept
-  {
-    if (this != &other)
-    {
-      this->~RangeTree(); // ERRO ?
-      _points = std::move(other._points);
-      _mainTree = std::move(other._mainTree);
-    }
-    return *this;
-  } */
   RangeTree(RangeTree&& other) noexcept:
     _points{std::move(other._points)},
     _mainTree{std::move(other._mainTree)}
   {
+    // do nothing
   }
 
   RangeTree& operator=(RangeTree&& other) noexcept
