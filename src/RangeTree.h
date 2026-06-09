@@ -142,7 +142,6 @@ public:
   {
     if (this != &other)
     {
-      //this->~BBST(); // ERRO?
       delete _root;
       _root = std::exchange(other._root, nullptr);
       _indices = std::move(other._indices); 
@@ -375,11 +374,12 @@ public:
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
 
-  /* RangeTree(const A& points):
+  RangeTree(const A& points):
     _points{points}
   {
     // do nothing
-  } */
+  }
+
   RangeTree(A&& points) noexcept:
     _points{std::move(points)}
   {
@@ -421,7 +421,6 @@ public:
   }
 
 private:
-  //const A _points; // Tava dando erro: não é possível mover um membro const
   A _points;
   rtree::BBST<D, P, A> _mainTree;
 
