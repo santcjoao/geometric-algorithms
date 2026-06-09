@@ -21,25 +21,29 @@ void runFullTest(const char *title, std::initializer_list<T> values,
 
   avl::Tree<T, C> t;
 
-  // insert (initializer_list)
+  // insert
   t.insert(values);
   printf("insert(%zu):   size=%d  height=%d  empty=%s\n", values.size(),
          t.size(), t.height(), t.empty() ? "true" : "false");
 
-  // iterate + range-for + reverse iterator
+  // iterate
   printf("iterate:     ");
   t.iterate(print);
   puts("");
+
+  // range-for
   printf("range-for:   ");
   for (const auto &v : t)
     print(v);
   puts("");
+
+  // reverse iterator
   printf("reverse:     ");
   for (auto it = t.rbegin(); it != t.rend(); ++it)
     print(*it);
   puts("");
 
-  // find + contains
+  // find e contains
   printf("find:        %s\n",
          t.find(findVal) != t.end() ? "found" : "not found");
   printf("contains:    %s\n", t.contains(findVal) ? "true" : "false");
@@ -58,7 +62,7 @@ void runFullTest(const char *title, std::initializer_list<T> values,
          t.empty() ? "true" : "false");
 }
 
-//  Tipo 2: Agregado — Vec3<T>
+// Agregado: Vec3
 template <typename T> struct Vec3 {
   T x, y, z;
 };
@@ -81,7 +85,7 @@ void printVec3(const Vec3<float> &v) {
   printf("(%.0f,%.0f,%.0f) ", v.x, v.y, v.z);
 }
 
-//  Tipo 3: Classe com destrutor: Traced
+// Classe com destrutor
 class Traced {
   char *_label;
   int _id;
@@ -126,10 +130,7 @@ struct TracedGreater {
 
 void printTraced(const Traced &t) { printf("{%d,\"%s\"} ", t.id(), t.label()); }
 
-// =====================================================================
 //  Funcoes de teste
-// =====================================================================
-
 void testIntLess() {
   runFullTest<int, std::less<int>>(
       "int, std::less<int>", {5, 3, 7, 9, 8, 0, 4, 2, 1, 6}, 7, 5, printInt);
@@ -208,10 +209,7 @@ void testTracedGreater() {
   printf("live objects: %d (expected 0)\n\n", Traced::liveCount());
 }
 
-// =====================================================================
 //  main
-// =====================================================================
-
 int main(int argc, char **argv) {
   std::string type = "all";
   std::string functor = "all";
