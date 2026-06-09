@@ -53,7 +53,7 @@ public:
   {
     if (this != &other)
     {
-      this->~BBST(); // Isso gera erro aparentemente.
+      //this->~BBST(); // Isso gera erro aparentemente.
       _indices = std::move(other._indices); 
     }
     return *this;
@@ -142,7 +142,8 @@ public:
   {
     if (this != &other)
     {
-      this->~BBST(); // ERRO?
+      //this->~BBST(); // ERRO?
+      delete _root;
       _root = std::exchange(other._root, nullptr);
       _indices = std::move(other._indices); 
     }
@@ -374,13 +375,18 @@ public:
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
 
-  RangeTree(const A& points):
+  /* RangeTree(const A& points):
     _points{points}
+  {
+    // do nothing
+  } */
+  RangeTree(A&& points) noexcept:
+    _points{std::move(points)}
   {
     // do nothing
   }
 
-  RangeTree(RangeTree&& other) noexcept:
+  /* RangeTree(RangeTree&& other) noexcept:
     _points{std::move(other._points)},
     _mainTree{std::move(other._mainTree)}
   {
@@ -392,6 +398,21 @@ public:
     if (this != &other)
     {
       this->~RangeTree(); // ERRO ?
+      _points = std::move(other._points);
+      _mainTree = std::move(other._mainTree);
+    }
+    return *this;
+  } */
+  RangeTree(RangeTree&& other) noexcept:
+    _points{std::move(other._points)},
+    _mainTree{std::move(other._mainTree)}
+  {
+  }
+
+  RangeTree& operator=(RangeTree&& other) noexcept
+  {
+    if (this != &other)
+    {
       _points = std::move(other._points);
       _mainTree = std::move(other._mainTree);
     }
@@ -416,7 +437,8 @@ public:
   }
 
 private:
-  const A _points;
+  //const A _points; // Tava dando erro: não é possível mover um membro const
+  A _points;
   rtree::BBST<D, P, A> _mainTree;
 
 }; // RangeTree
