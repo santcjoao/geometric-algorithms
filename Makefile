@@ -1,83 +1,45 @@
-# Compilação
+# Compilador e flags
 CXX      = g++
-CXXFLAGS = -std=c++20 -O3 
-INCLUDES = -I../include -I.
+CXXFLAGS = -std=c++20 -O3 -Wall
+INCLUDES = -Iinclude -Iinclude/physx -I.
+INCLUDES = -Iinclude -I.
+#INCLUDES = -Iinclude -Iinclude/graphics -Iinclude/util -Iinclude/physx -Iinclude/src
 
+# Diretórios
 BUILD_DIR = build
-RAW_DIR   = benchmarks/raw
 TARGET    = $(BUILD_DIR)/main.exe
 
+# Sources: Main.cpp + todos os .cpp em include/util (e outras pastas se necessário)
+# Se houver outros .cpp (ex: em include/physx), adicione-os aqui.
 SOURCES   = Main.cpp
+UTIL_CPP  = $(wildcard include/util/*.cpp)
+SOURCES  += $(UTIL_CPP)
+
 OBJECTS   = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
+# Para fontes dentro de subpastas, precisamos mapear os .o corretamente.
+# Como os .cpp de util estão em include/util/, seus objetos ficarão em build/include/util/*.o
+# Vamos ajustar a regra de compilação para criar a estrutura de diretórios.
 
-# Parâmetros Padrão (Run)
-algo   ?= range
-func   ?= all
-struct ?= array
-dim    ?= 3
-count  ?= 50k
-box    ?= 200.0
-seed   ?= 42
-
-# Parâmetros Padrão (Profile)
-start        ?= 10k
-end          ?= 100k
-stride       ?= 10k
-out          ?= profiling.csv
-profile_algo ?= both
-
-# Configuração de Argumentos CLI
-BASE_ARGS = func=$(func) struct=$(struct) dim=$(dim) box=$(box)
-ifneq ($(seed),)
-    BASE_ARGS += seed=$(seed)
-endif
-
-RUN_ARGS     = algo=$(algo) count=$(count) $(BASE_ARGS)
-PROFILE_ARGS = algo=$(profile_algo) start=$(start) end=$(end) stride=$(stride) $(BASE_ARGS)
-
-# Regras Principais
-.PHONY: all clean run profile profile-all help
+.PHONY: all clean run
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@
-
+# Regra para compilar qualquer .cpp, mantendo a estrutura de pastas em build/
 $(BUILD_DIR)/%.o: %.cpp
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+$(TARGET): $(OBJECTS)
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 clean:
-	rm -rf $(BUILD_DIR) benchmarks
+	rm -rf $(BUILD_DIR)
 
-# Execução e Profiling
 run: all
-	@./$(TARGET) $(RUN_ARGS) $(args)
+	@./$(TARGET)
 
-profile: all
-	@mkdir -p $(RAW_DIR)
-	@./$(TARGET) $(PROFILE_ARGS) $(args) > $(RAW_DIR)/$(out)
-	@echo "[+] Amostragem salva em $(RAW_DIR)/$(out)"
-
-define rodar_matriz
-	@echo "N,Dim,Box,Struct,Match,NaiveMs,RtBuildMs,RtQueryMs,RtQueryRssKb" > $(RAW_DIR)/$(1).csv
-	@for d in 2 3; do \
-		for s in array vector; do \
-			echo "[->] [Cenario: $(1)] Dimensao $$d | Estrutura $$s..."; \
-			./$(TARGET) algo=both func=$(2) start=100k end=1000k stride=100k box=$(3) dim=$$d struct=$$s seed=123456789 header=false >> $(RAW_DIR)/$(1).csv; \
-		done \
-	done
-endef
-
-profile-all: all
-	@mkdir -p $(RAW_DIR)
-	@echo "[*] Perfilamento Trilinear (100k a 1M)..."
-	$(call rodar_matriz,worst,all,2000.0)
-	$(call rodar_matriz,normal,all,200.0)
-	$(call rodar_matriz,best,all,0.0)
-	@echo "[+] Matrizes geradas em $(RAW_DIR)/"
-
-help:
-	@echo "make run algo=both func=all count=150k dim=2"
-	@echo "make profile start=10k end=100k stride=10k out=analise.csv"
+# Opção: executar com argumentos extras (ex: make run args="--help")
+# Descomente se quiser:
+# run: all
+#	@./$(TARGET) $(args)
