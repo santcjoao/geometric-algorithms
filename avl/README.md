@@ -1,6 +1,12 @@
-# AVL Tree
+# Exercício 1: AVL Tree - Tópicos em Computação II 2026
 
 Implementação de uma Árvore AVL genérica em C++17.
+
+## Autores
+
+- Arthur Barbosa de Andrade
+- João Pedro Santana de Carvalho
+- Nathan de Almeida Rezende
 
 ## Guia de Uso (Makefile)
 
