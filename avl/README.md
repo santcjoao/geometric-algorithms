@@ -1,4 +1,4 @@
-# Prova 1: Range Tree - Tópicos em Computação II 2026
+# Exercício 1: AVL - Tópicos em Computação II 2026
 
 ## Autores
 
