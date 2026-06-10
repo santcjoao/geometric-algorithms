@@ -8,6 +8,10 @@ Implementação de uma Árvore AVL genérica em C++17.
 - João Pedro Santana de Carvalho
 - Nathan de Almeida Rezende
 
+## Vídeo de demonstração
+
+Link: https://drive.google.com/file/d/1wJdSNKuNCtGR3znRatsFYPyodhz5fhvw/view?usp=sharing
+
 ## Guia de Uso (Makefile)
 
 ### Compilar
