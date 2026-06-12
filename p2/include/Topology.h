@@ -13,9 +13,7 @@ struct Face;
 struct Boundary;
 
 class TopologyIteratorBase
-{
-
-};
+{};
 
 class VertexIterator: public TopologyIteratorBase
 {};
