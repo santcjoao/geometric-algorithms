@@ -21,7 +21,7 @@ public:
 
   auto& operator [](size_t i) const
   {
-    assert(i >= 0 && i < 2);
+    assert(i < 2);
     return (&_p1)[i];
   }
 

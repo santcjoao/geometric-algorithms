@@ -57,6 +57,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -73,6 +74,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <StructMemberAlignment>1Byte</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,7 +82,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\util\SoA.h" />
     <ClInclude Include="..\..\p2\ArrayView.h" />
+    <ClInclude Include="..\..\p2\DecorationSet.h" />
+    <ClInclude Include="..\..\p2\MeshDecoration.h" />
     <ClInclude Include="..\..\p2\TriangleMesh.h" />
   </ItemGroup>
   <ItemGroup>

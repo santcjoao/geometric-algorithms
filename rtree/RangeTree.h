@@ -82,15 +82,8 @@ private:
 
   struct Node
   {
-    real value; // Pivô. Valor da d-ésima coordenada do ponto.
+    // insert your code here
 
-    // Intervalo [first, last) de pontos associados a este nó.
-    Index_t first;
-    Index_t last;
-
-    AssociatedTree* associatedTree{};
-    Node* left{};
-    Node* right{};
   }; // Node
 
   Node* _root{};
