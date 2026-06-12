@@ -1,4 +1,4 @@
-#include "MeshDecoration.h"
+#include "include/MeshDecoration.h"
 
 using namespace tcii::cg;
 
