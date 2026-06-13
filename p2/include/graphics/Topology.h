@@ -1,6 +1,9 @@
 #ifndef __Topology_h
 #define __Topology_h
 
+#include "../TriangleMesh.h"
+
+/// @brief This is an example of a Topology, more specifically the given topology of P2.
 namespace tcii::cg
 { // begin namespace tcii::cg
 
