@@ -24,7 +24,7 @@ concept is_collection_of_topological_elements = requires(A collection, size_t i)
   // tem operação size()
 };
 
-template<typename T, typename A>
+template<typename T, typename A = typename std::vector> // não sei se ta certo se pa que n mas é por ai
 requires is_topology<T> && is_collection_of_topological_elements<A>
 class Mesh
 {
