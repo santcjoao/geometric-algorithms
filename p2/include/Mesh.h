@@ -9,27 +9,25 @@ namespace tcii::cg
 { // begin namespace tcii::cg
 
 template<typename T>
-concept is_topology = requires(T t)
+concept is_topology = requires(T t, TriangleMesh& m)
 {
   // define tais elementos
+  T::collection;
+  
   // deve ter um construtor que recebe um TriangleMesh
+  t(m);
   // tem uma estrutura TopologyTraits<T> que define coisas sobre atributos topologicos
   // tem atributo templatizado com os elementos topológicos
+  requires true; // bababui
 };
 
-template<typename A>
-concept is_collection_of_topological_elements = requires(A collection, size_t i)
-{
-  // é indexável
-  // tem operação size()
-};
-
-template<typename T, typename A = typename std::vector> // não sei se ta certo se pa que n mas é por ai
-requires is_topology<T> && is_collection_of_topological_elements<A>
+template<typename T>
+requires is_topology<T>
 class Mesh
 {
 public:
-  using Topology = T<A>;  
+  using topology = T;  
+  using collection_type = T::collection;
 
   Mesh(TriangleMesh& mesh):
     _topology{mesh}
@@ -37,8 +35,13 @@ public:
     // do nothing
   }
 
+  // chamada de funções de processamento
+  // incident edges
+  // k-ring (vert)
+  // k-ring (face)
+
 private:
-  Topology _topology;
+  topology _topology;
 };
 
 } // end namespace tcii::cg
