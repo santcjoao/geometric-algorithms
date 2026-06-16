@@ -1,6 +1,11 @@
+compile_commands.json
+
 benchmarks/
 scripts/
 build/
 
 .vscode/
+.clangd
+.cache/
+
 *.exe

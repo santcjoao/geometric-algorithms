@@ -1,11 +1,10 @@
 #include "core/ParticleSystem.h"
 #include "core/RangeTree.h"
 #include "core/Types.h"
-#include "include/graphics/Vec3.h"
+#include "graphics/Vec3.h"
 #include <cstdio>
 #include <iostream>
 #include <random>
-#include <vector>
 
 using namespace tcii::physx;
 using Vec3f = tcii::cg::Vec3f;
@@ -67,9 +66,12 @@ int main() {
     positions[i] = pb->position(i);
   }
 
-  // 2. Construir a RangeTree (move semantics)
-  RangeTreeArray rt(std::move(positions));
-  rt.build();
+  // 2. Construir a RangeTree (testando construtor de movimento) e Move
+  // Assignment
+  RangeTreeArray tempRt(std::move(positions));
+  tempRt.build();
+  RangeTreeArray rt;
+  rt = std::move(tempRt); // Testando o operador de movimento explícito
 
   // 3. Definir a caixa de busca (ex: metade do espaço original)
   tcii::cg::Bounds3f queryBox;
@@ -83,20 +85,23 @@ int main() {
   // 4. Cor alvo (ex: vermelho)
   Vec3f targetColor(1, 0, 0);
 
-  // 5. Função de filtro: conta as partículas que têm a cor alvo
-  size_t matched = 0;
+  // 5. Função de filtro: descarta as partículas que não têm a cor alvo
   auto colorFilter = [&](const PointArray &, size_t idx) -> bool {
-    if (pb->get<2>(idx) == targetColor) // get<2> retorna a cor (terceiro campo)
-      ++matched;
-    return true; // sempre true para não interromper a busca
+    // Retorna true APENAS se tiver a cor alvo (para ser
+    // contabilizada/retornada) Retorna false para descartar as demais.
+    return pb->get<2>(idx) == targetColor;
   };
 
-  // 6. Executar a consulta
-  size_t totalInBox = rt.query(queryBox, colorFilter);
+  // 6. Executar a consulta com o filtro
+  size_t returnedByQuery = rt.query(queryBox, colorFilter);
+
+  // Consulta sem filtro (aceita tudo) para mostrar a diferença
+  size_t totalInBox =
+      rt.query(queryBox, [](const PointArray &, size_t) { return true; });
 
   std::cout << "Total particles inside query box: " << totalInBox << std::endl;
   std::cout << "Particles with color " << targetColor
-            << " inside box: " << matched << std::endl;
+            << " inside box: " << returnedByQuery << std::endl;
 
   // (Opcional) Validação manual
   size_t manualMatch = 0;

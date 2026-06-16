@@ -1,60 +1,26 @@
-# Prova 1: Range Tree - Tópicos em Computação II 2026
+# Integração: Range Tree e Particle System - Tópicos em Computação II 2026
 
 ## Autores
 
 - Arthur Barbosa de Andrade
-- João Pedro Santana de Carvalho
+- João Pedro Sant' Ana de Carvalho
 - Nathan de Almeida Rezende
 
-## Status das Atividades
+## Sobre o Projeto
 
-- A1 (Estrutura do nó de uma BBST de dimensão l > 1):Concluída
-- A2 (Métodos de construção e consulta multidimensional): Concluída
-- A3 (Rotinas de teste da RT com R2, R3, Array nativo e std::vector): Concluída
-- A4 (Vídeo gravado demonstrando execução e código): Concluída
+Este projeto demonstra a integração e extensão da estrutura de dados **Range Tree** para atuar em conjunto com um sistema físico de partículas (`ParticleSystem`). O foco dos testes presentes na `main` é validar a utilização da Range Tree para consultas espaciais tridimensionais (AABB) em buffers de partículas contendo múltiplos atributos (como Posição, Velocidade e Cor).
 
-## Link do vídeo de explicação no Google Drive
+## Principais Funcionalidades Testadas
 
-https://drive.google.com/file/d/1b00jLvEi68rPXZpvWSDJ6xlli46_JOsm/view?usp=sharing
+- **Construção 3D Multi-atributo**: Construção de uma Range Tree tridimensional aceitando tuplas de dados complexos (Partículas estruturadas através de variados *Fields* via *Templates*).
+- **Semântica de Movimentação (Move Semantics)**: Validação da transferência de propriedade dos dados (*ownership transfer*) na inicialização da árvore, garantindo a performance da estrutura ao não copiar dados grandes.
+- **Consulta Espacial e Filtragem**: Consulta em janela (AABB - Axis-Aligned Bounding Box) em conjunto com predicados customizados (ex: buscar espacialmente e filtrar apenas as partículas contidas na AABB que sejam puramente da cor vermelha `(1, 0, 0)`).
 
-# Guia de Execução CLI
+## Guia de Execução
 
-Este repositório disponibiliza alvos Makefile para executar testes e coletar métricas de desempenho.
+O repositório disponibiliza alvos simples através do `Makefile` para facilitar a compilação e o teste do programa. 
 
-## Comandos principais
-- `make run` — Executa um teste único e imprime os resultados no console.
-- `make profile` — Executa um intervalo iterativo de testes e exporta os dados para um arquivo CSV.
-- `make profile-all` — Roda automaticamente a bateria assintótica completa (Pior, Normal e Melhor caso) iterando de 100k a 1M pontos.
-- `make clean` — Exclui os artefatos de compilação e a pasta de benchmarks gerada.
-
-## Argumentos de configuração
-- `algo = naive | range | both`
-    - `naive`: Executa estritamente a busca linear exaustiva.
-    - `range`: Constrói a estrutura espacial e consulta apenas a Range Tree.
-    - `both`: Executa ambos os algoritmos em sequência e valida a correspondência (integridade) dos resultados.
-
-- `func = all | early | custom`
-    - `all`: O predicado retorna verdadeiro para todos os pontos contidos na janela geométrica (coleta total).
-    - `early`: O predicado retorna falso no primeiro ponto encontrado, acionando a interrupção prematura da busca (early exit).
-    - `custom`: O predicado é dedicado para customização da função, passível de uso para testes específicos.
-
-- `struct = array | vector`
-    - `array`: Armazena os dados sintéticos utilizando o contêiner customizado `cg::Array`.
-    - `vector`: Armazena os dados sintéticos utilizando a estrutura padrão `std::vector`.
-
-## Métricas geradoras
-- `dim = <int>` — Define a dimensionalidade do espaço vetorial gerado (2 ou 3).
-- `count = <string>` — Quantidade total de pontos do conjunto estático (aceita notação k, ex: `150k`).
-- `box = <float>` — Dimensão paramétrica da aresta da janela de consulta (AABB).
-- `seed = <int>` — Semente de geração determinística para garantir a reprodutibilidade dos pontos no espaço.
-
-## Parâmetros iterativos (exclusivos do `make profile`)
-- `start = <string>` — Volume de pontos na primeira iteração (ex: `10k`).
-- `end = <string>` — Volume de pontos na iteração final (ex: `100k`).
-- `stride = <string>` — Incremento no volume de pontos a cada passo do loop (ex: `10k`).
-- `out = <string>` — Nome do arquivo final exportado no diretório bruto (ex: `ensaio_2d.csv`).
-
-## Exemplo de uso
-```bash
-make profile algo=both func=all struct=vector dim=2 count=100k box=0.1 seed=42 start=10k end=100k stride=10k out=ensaio_2d.csv
-```
+### Comandos:
+- `make` — Compila todo o código-fonte (processando a `main` e classes utilitárias/físicas associadas) e gera o executável no diretório `/build`.
+- `make run` — Executa o programa principal. O console imprimirá o status e a lista inicial de partículas espalhadas pelo mundo, para em seguida exibir as saídas validadas do teste de intersecção/busca através da *Range Tree*.
+- `make clean` — Limpa completamente os artefatos de build gerados durante a compilação.

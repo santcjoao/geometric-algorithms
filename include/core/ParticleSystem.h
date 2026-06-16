@@ -1,7 +1,7 @@
 #ifndef __ParticleSystem_h
 #define __ParticleSystem_h
 
-#include "ParticleBuffer.h"
+#include "core/ParticleBuffer.h"
 #include "physx/Actor.h"
 
 namespace tcii::physx { // begin namespace tcii::physx
@@ -19,6 +19,8 @@ private:
 
 template <typename... Fields> class ParticleSystem : public ParticleSystemBase {
 public:
+  using PA = ParticleBuffer<Fields...>;
+
   static ParticleSystem *New() { return new ParticleSystem; }
 
   void setParticleBuffer(unsigned capacity);
@@ -29,8 +31,6 @@ public:
   void render(Renderer &) const override;
 
 private:
-  using PA = ParticleBuffer<Fields...>;
-
   ObjectPtr<PA> _particles;
 
 }; // ParticleSystem

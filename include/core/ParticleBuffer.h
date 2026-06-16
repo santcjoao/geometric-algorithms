@@ -5,7 +5,6 @@
 #include "physx/Renderer.h"
 #include "util/SharedObject.h"
 #include "util/SoA.h"
-#include <algorithm>
 #include <tuple>
 
 namespace tcii::physx {

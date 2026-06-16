@@ -5,7 +5,6 @@
 #include "util/Array.h"
 #include <concepts>
 #include <functional>
-#include <numeric>
 #include <type_traits>
 
 namespace tcii::cg { // begin namespace tcii::cg
@@ -342,6 +341,8 @@ public:
 
   using Bounds = typename PointTraits<P>::Bounds;
   using PointFunc = rtree::PointFunc<A>;
+
+  RangeTree() = default;
 
   RangeTree(const A &points) : _points{points} {
     // do nothing
