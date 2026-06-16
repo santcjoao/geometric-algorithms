@@ -4,26 +4,21 @@
 #include "PointTraits.h"
 #include <random>
 
-namespace tcii::cg
-{ // begin namespace tcii::cg
+namespace tcii::cg { // begin namespace tcii::cg
 
-template <typename P, typename A>
-class PointSource
-{
+template <typename P, typename A> class PointSource {
 public:
   constexpr static auto D = point_dim_v<P>;
 
   using real = typename P::value_type;
   using Bounds = typename PointTraits<P>::Bounds;
 
-  A random(size_t, const Bounds&) const;
+  A random(size_t, const Bounds &) const;
 
 }; // PointSource
 
 template <typename P, typename A>
-A
-PointSource<P, A>::random(size_t n, const Bounds& bounds) const
-{
+A PointSource<P, A>::random(size_t n, const Bounds &bounds) const {
   using URD = std::uniform_real_distribution<real>;
 
   std::random_device rd;
@@ -35,9 +30,8 @@ PointSource<P, A>::random(size_t n, const Bounds& bounds) const
 
   A points(n);
 
-  for (size_t i = 0; i < n; ++i)
-  {
-    auto& p = points[i];
+  for (size_t i = 0; i < n; ++i) {
+    auto &p = points[i];
 
     for (size_t d = 0; d < D; ++d)
       p[d] = dists[d](gen);
@@ -45,6 +39,6 @@ PointSource<P, A>::random(size_t n, const Bounds& bounds) const
   return points;
 }
 
-} // end namesapce tcii::cg
+} // namespace tcii::cg
 
 #endif // __Utils_h

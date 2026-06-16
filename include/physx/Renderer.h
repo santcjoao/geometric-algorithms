@@ -3,20 +3,16 @@
 
 #include "graphics/Vec3.h"
 
-namespace tcii::physx
-{ // begin namespace tcii::physx
+namespace tcii::physx { // begin namespace tcii::physx
 
-class Renderer
-{
+class Renderer {
 public:
-  auto& draw(const char* label, const cg::Vec3f& p)
-  {
+  auto &draw(const char *label, const cg::Vec3f &p) {
     std::cout << label << p << '\n';
     return *this;
   }
 
-  auto& draw(const char* label, float s)
-  {
+  auto &draw(const char *label, float s) {
     std::cout << label << ':' << s << '\n';
     return *this;
   }

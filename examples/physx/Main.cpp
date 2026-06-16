@@ -3,9 +3,7 @@
 #include "Scene.h"
 #include "SphereShape.h"
 
-int
-main()
-{
+int main() {
   using namespace tcii::physx;
 
   auto scene = Scene::New();

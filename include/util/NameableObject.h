@@ -3,25 +3,18 @@
 
 #include <string>
 
-namespace tcii::cg
-{ // begin namespace tcii::cg
+namespace tcii::cg { // begin namespace tcii::cg
 
-class NameableObject
-{
+class NameableObject {
 public:
-  auto name() const
-  {
-    return _name.c_str();
-  }
+  auto name() const { return _name.c_str(); }
 
-  void setName(const char* format, ...);
+  void setName(const char *format, ...);
 
 protected:
   NameableObject() = default;
 
-  NameableObject(const char* name):
-    _name{name}
-  {
+  NameableObject(const char *name) : _name{name} {
     // do nothing
   }
 

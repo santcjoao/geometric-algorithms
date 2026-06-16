@@ -5,8 +5,7 @@
 #include "util/SharedObject.h"
 #include <concepts>
 
-namespace tcii::cg
-{ // begin namespace tcii::cg
+namespace tcii::cg { // begin namespace tcii::cg
 
 template <typename T>
 concept Shared = std::derived_from<T, SharedObject>;
@@ -17,23 +16,17 @@ using ObjectPtrListIteratorBase = ObjectPtrListBase::Iterator;
 template <Shared T> class ObjectPtrList;
 
 template <Shared T>
-class ObjectPtrListIterator: public ObjectPtrListIteratorBase
-{
+class ObjectPtrListIterator : public ObjectPtrListIteratorBase {
 public:
-  T* operator *() const
-  {
-    return (T*)ObjectPtrListIteratorBase::operator *().get();
+  T *operator*() const {
+    return (T *)ObjectPtrListIteratorBase::operator*().get();
   }
 
-  auto operator ->() const
-  {
-    return operator *();
-  }
+  auto operator->() const { return operator*(); }
 
 private:
-  ObjectPtrListIterator(const ObjectPtrListIteratorBase& it):
-    ObjectPtrListIteratorBase{it}
-  {
+  ObjectPtrListIterator(const ObjectPtrListIteratorBase &it)
+      : ObjectPtrListIteratorBase{it} {
     // do nothing
   }
 
@@ -41,26 +34,15 @@ private:
 
 }; // ObjectPtrListIterator
 
-template <Shared T>
-class ObjectPtrList: public ObjectPtrListBase
-{
+template <Shared T> class ObjectPtrList : public ObjectPtrListBase {
 public:
   using Iterator = ObjectPtrListIterator<T>;
 
-  void add(const T* node)
-  {
-    ObjectPtrListBase::add(node);
-  }
+  void add(const T *node) { ObjectPtrListBase::add(node); }
 
-  Iterator begin() const
-  {
-    return ObjectPtrListBase::begin();
-  }
+  Iterator begin() const { return ObjectPtrListBase::begin(); }
 
-  Iterator end() const
-  {
-    return ObjectPtrListBase::end();
-  }
+  Iterator end() const { return ObjectPtrListBase::end(); }
 
 }; // ObjectPtrList
 

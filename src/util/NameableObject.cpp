@@ -1,13 +1,10 @@
-#include "NameableObject.h"
+#include "util/NameableObject.h"
 #include <cstdarg>
 #include <cstdio>
 
-namespace tcii::cg
-{ // begin namespace tcii::cg
+namespace tcii::cg { // begin namespace tcii::cg
 
-void
-NameableObject::setName(const char* format, ...)
-{
+void NameableObject::setName(const char *format, ...) {
   constexpr auto bufferSize = 128;
   char buffer[bufferSize];
   va_list args;

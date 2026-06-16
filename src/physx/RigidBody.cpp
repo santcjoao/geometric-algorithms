@@ -1,11 +1,8 @@
-#include "RigidBody.h"
+#include "physx/RigidBody.h"
 
-namespace tcii::physx
-{ // begin namespace tcii::physx
+namespace tcii::physx { // begin namespace tcii::physx
 
-RigidBody*
-RigidBody::New()
-{
+RigidBody *RigidBody::New() {
   static int nextId;
   auto body = new RigidBody{};
 
@@ -13,22 +10,18 @@ RigidBody::New()
   return body;
 }
 
-Bounds3f
-RigidBody::bounds() const
-{
+Bounds3f RigidBody::bounds() const {
   Bounds3f bounds;
 
-  for (auto& shape : _shapes)
+  for (auto &shape : _shapes)
     bounds.inflate(shape.bounds());
   return bounds;
 }
 
-void
-RigidBody::render(Renderer& renderer) const
-{
+void RigidBody::render(Renderer &renderer) const {
   std::cout << "**" << name() << '\n';
   std::cout << "Bounds " << bounds() << '\n';
-  for (auto& shape : _shapes)
+  for (auto &shape : _shapes)
     shape.render(renderer);
 }
 
