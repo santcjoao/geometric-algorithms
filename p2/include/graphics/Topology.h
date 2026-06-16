@@ -12,6 +12,8 @@ namespace tcii::cg
 using index_t = unsigned;
 using TM = TriangleMesh;
 
+enum Elements { VertexData = 0, HalfEdgeData, EdgeData, FaceData, BoundaryData };
+
 struct Vertex
 {
   index_t id;
