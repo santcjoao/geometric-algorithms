@@ -12,7 +12,7 @@ SOURCES  += $(UTIL_CPP) $(PHYSX_CPP)
 
 OBJECTS   = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
 
-.PHONY: all clean run format
+.PHONY: all clean run
 
 all: $(TARGET)
 
