@@ -10,156 +10,167 @@
 using namespace tcii::physx;
 using Vec3f = tcii::cg::Vec3f;
 
-// Comparação componente-a-componente de Vec3f
+// ---- Utilitários ----------------------------------------------------------
+
 bool operator==(const Vec3f &a, const Vec3f &b) {
   return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
 }
 
-// Geração de float aleatório no intervalo [a, b]
 float randomFloat(float a, float b) {
   static std::random_device rd;
   static std::mt19937 gen(rd());
-  std::uniform_real_distribution<float> dist(a, b);
-  return dist(gen);
+  return std::uniform_real_distribution<float>(a, b)(gen);
 }
 
-// Geração de Vec3f aleatório dentro de uma bounding box [min, max]
-Vec3f randomVec3f(const Vec3f &min, const Vec3f &max) {
-  return Vec3f(randomFloat(min[0], max[0]), randomFloat(min[1], max[1]),
-               randomFloat(min[2], max[2]));
+Vec3f randomVec3f(const Vec3f &lo, const Vec3f &hi) {
+  return {randomFloat(lo[0], hi[0]), randomFloat(lo[1], hi[1]),
+          randomFloat(lo[2], hi[2])};
 }
 
-// Separador visual para o console
-void printSeparator(const char *title) {
-  std::cout << "\n--- " << title << " ---\n";
+char colorTag(const Vec3f &c) {
+  if (c[0] == 1 && c[1] == 0 && c[2] == 0)
+    return 'R';
+  if (c[0] == 0 && c[1] == 1 && c[2] == 0)
+    return 'G';
+  if (c[0] == 0 && c[1] == 0 && c[2] == 1)
+    return 'B';
+  if (c[0] == 1 && c[1] == 1 && c[2] == 0)
+    return 'Y';
+  return '?';
 }
+
+// ---- Logging --------------------------------------------------------------
+
+void section(const char *title) { std::cout << "\n--- " << title << " ---\n"; }
+
+void logMoveBefore(const char *action, const char *srcName, size_t srcSize) {
+  std::cout << "  Antes do " << action << ":\n"
+            << "    " << srcName << ".size() = " << srcSize << "\n";
+}
+
+void logMoveAfter(const char *action, const char *srcName, size_t srcSize,
+                  const char *dstName, size_t dstSize) {
+  std::cout << "  Depois do " << action << ":\n"
+            << "    " << srcName << ".size() = " << srcSize << "\n"
+            << "    " << dstName << ".size() = " << dstSize << "\n";
+}
+
+void logParticleTable(ParticleBuffer<Vec3f, Vec3f> *pb,
+                      const tcii::cg::Bounds3f &queryBox) {
+  std::cout
+      << "\n #   Posicao              Velocidade           | COR  CONTIDO\n";
+  int i = 0;
+  for (auto it = pb->begin(); it != pb->end(); ++it, ++i) {
+    const auto &p = it.position();
+    const auto &v = it.get<1>();
+    const auto &c = it.get<2>();
+    printf(" %-3d (%6.2f,%6.2f,%6.2f)  (%6.2f,%6.2f,%6.2f)  |  %c      %d\n", i,
+           p[0], p[1], p[2], v[0], v[1], v[2], colorTag(c),
+           queryBox.contains(p) ? 1 : 0);
+  }
+}
+
+void logQueryResults(size_t rtTotal, size_t rtRed, size_t bfTotal,
+                     size_t bfRed) {
+  printf("  %-24s RangeTree  Manual\n", "");
+  printf("  Total na AABB:          %-10zu %zu\n", rtTotal, bfTotal);
+  printf("  Vermelhas na AABB:      %-10zu %zu\n", rtRed, bfRed);
+  bool ok = (rtTotal == bfTotal && rtRed == bfRed);
+  std::cout << "  Resultado: " << (ok ? "OK" : "FALHA") << "\n";
+}
+
+// ---- Testes ---------------------------------------------------------------
+
+// Popula o ParticleSystem com N partículas aleatórias.
+void populateParticles(ParticleBuffer<Vec3f, Vec3f> *pb, int n) {
+  Vec3f lo(-10, -10, -10), hi(10, 10, 10);
+  Vec3f colors[] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 0}};
+
+  for (int i = 0; i < n; ++i)
+    pb->add(randomVec3f(lo, hi), randomVec3f({-1, -1, -1}, {1, 1, 1}),
+            colors[i % 4]);
+}
+
+// Constrói a RangeTree usando move semantics e imprime prova.
+RangeTreeArray buildTreeWithMove(ParticleBuffer<Vec3f, Vec3f> *pb) {
+  // Extrai posições do buffer
+  PointArray pos(pb->particleCount());
+  for (unsigned i = 0; i < pb->particleCount(); ++i)
+    pos[i] = pb->position(i);
+
+  // Move constructor
+  logMoveBefore("move constructor", "positions", pos.size());
+  RangeTreeArray tmp(std::move(pos));
+  tmp.build();
+  logMoveAfter("move constructor", "positions", pos.size(), "tempRt.points()",
+               tmp.points().size());
+  std::cout << "\n";
+
+  // Move assignment
+  logMoveBefore("move assignment", "tempRt.points()", tmp.points().size());
+  RangeTreeArray rt;
+  rt = std::move(tmp);
+  logMoveAfter("move assignment", "tempRt.points()", tmp.points().size(),
+               "rt.points()", rt.points().size());
+
+  return rt;
+}
+
+// Executa consulta AABB com e sem filtro, retorna contagens via parâmetros
+void runQuery(RangeTreeArray &rt, ParticleBuffer<Vec3f, Vec3f> *pb,
+              const tcii::cg::Bounds3f &box, size_t &rtTotal, size_t &rtRed,
+              size_t &bfTotal, size_t &bfRed) {
+  Vec3f red{1, 0, 0};
+
+  // RangeTree: sem filtro
+  rtTotal = rt.query(box, [](const PointArray &, size_t) { return true; });
+
+  // RangeTree: filtro por cor vermelha
+  rtRed = rt.query(box, [&](const PointArray &, size_t i) -> bool {
+    return pb->get<2>(i) == red;
+  });
+
+  // Brute-force: validação
+  bfTotal = bfRed = 0;
+  for (unsigned i = 0; i < pb->particleCount(); ++i) {
+    if (box.contains(pb->position(i))) {
+      ++bfTotal;
+      if (pb->get<2>(i) == red)
+        ++bfRed;
+    }
+  }
+}
+
+// ---- Main -----------------------------------------------------------------
 
 int main() {
-  constexpr int NUM_PARTICLES = 20;
+  constexpr int N = 20;
 
-  // 1. CONSTRUÇÃO 3D MULTI-ATRIBUTO
-  printSeparator("1. Construcao do ParticleSystem (3D, multi-atributo)");
-
+  // 1. Construção multi-atributo
+  section("1. Construcao do ParticleSystem (3D, multi-atributo)");
   auto ps = ParticleSystem<Vec3f, Vec3f>::New();
   ps->setParticleBuffer(1000);
   auto pb = ps->particles();
+  populateParticles(pb, N);
 
-  // Limites do mundo e paleta de cores
-  Vec3f worldMin(-10, -10, -10);
-  Vec3f worldMax(10, 10, 10);
-  Vec3f red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0);
-  std::vector<Vec3f> palette = {red, green, blue, yellow};
-
-  // Popula o buffer com partículas aleatórias
-  for (int i = 0; i < NUM_PARTICLES; ++i) {
-    Vec3f pos = randomVec3f(worldMin, worldMax);
-    Vec3f vel = randomVec3f(Vec3f(-1, -1, -1), Vec3f(1, 1, 1));
-    Vec3f col = palette[i % palette.size()];
-    pb->add(pos, vel, col);
-  }
-
-  std::cout << NUM_PARTICLES << " particulas geradas.\n";
-  std::cout << "Bounds do sistema: " << ps->bounds() << "\n";
-
-  // Define a região de busca (AABB) antecipadamente para usar na listagem
   tcii::cg::Bounds3f queryBox;
   queryBox.inflate(Vec3f(-5, -5, -5));
   queryBox.inflate(Vec3f(5, 5, 5));
 
-  // Brute-force: verifica containment de cada partícula na AABB
-  std::vector<bool> contained(pb->particleCount());
-  for (unsigned i = 0; i < pb->particleCount(); ++i)
-    contained[i] = queryBox.contains(pb->position(i));
+  std::cout << N << " particulas geradas.\n";
+  std::cout << "Bounds do sistema: " << ps->bounds() << "\n";
+  std::cout << "Regiao de busca:   " << queryBox << "\n";
+  logParticleTable(pb, queryBox);
 
-  // Inicial da cor (R/G/B/Y)
-  auto colorTag = [&](const Vec3f &c) -> char {
-    if (c == red)
-      return 'R';
-    if (c == green)
-      return 'G';
-    if (c == blue)
-      return 'B';
-    if (c == yellow)
-      return 'Y';
-    return '?';
-  };
+  // 2. Move semantics
+  section("2. Construcao da RangeTree (move semantics)");
+  RangeTreeArray rt = buildTreeWithMove(pb);
 
-  // Listagem das partículas com info de cor e containment
-  std::cout
-      << "\n #   Posicao              Velocidade           | COR  CONTIDO\n";
-  int idx = 0;
-  for (auto it = pb->begin(); it != pb->end(); ++it) {
-    const auto &pos = it.position();
-    const auto &vel = it.get<1>();
-    const auto &col = it.get<2>();
-    printf(" %-3d (%6.2f,%6.2f,%6.2f)  (%6.2f,%6.2f,%6.2f)  |  %c      %d\n",
-           idx, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2], colorTag(col),
-           contained[idx] ? 1 : 0);
-    ++idx;
-  }
-
-  // 2. MOVE SEMANTICS
-  printSeparator("2. Construcao da RangeTree (move semantics)");
-
-  // Copia posições do buffer para um PointArray independente
-  PointArray positions(pb->particleCount());
-  for (unsigned i = 0; i < pb->particleCount(); ++i)
-    positions[i] = pb->position(i);
-
-  std::cout << "-> Antes do move constructor:\n";
-  std::cout << "   positions.size() = " << positions.size() << "\n";
-
-  // Move constructor: transfere ownership do array para a árvore temporária
-  RangeTreeArray tempRt(std::move(positions));
-  tempRt.build();
-  std::cout << "-> Depois do move constructor:\n";
-  std::cout << "   positions.size() = " << positions.size() << "\n";
-  std::cout << "   tempRt.points().size() = " << tempRt.points().size()
-            << "\n\n";
-
-  std::cout << "-> Antes do move assignment:\n";
-  std::cout << "   tempRt.points().size() = " << tempRt.points().size() << "\n";
-
-  // Move assignment: transfere a árvore inteira para outra variável
-  RangeTreeArray rt;
-  rt = std::move(tempRt);
-  std::cout << "-> Depois do move assignment:\n";
-  std::cout << "   tempRt.points().size() = " << tempRt.points().size() << "\n";
-  std::cout << "   rt.points().size() = " << rt.points().size() << "\n";
-
-  // 3. CONSULTA ESPACIAL (AABB) + FILTRAGEM POR PREDICADO
-  printSeparator("3. Consulta AABB com predicado customizado");
-  std::cout << "Regiao de busca: " << queryBox << "\n";
-
-  // Consulta sem filtro: conta todas as partículas na AABB
-  size_t totalInBox =
-      rt.query(queryBox, [](const PointArray &, size_t) { return true; });
-
-  // Consulta com filtro: apenas partículas vermelhas na AABB
-  Vec3f targetColor = red;
-  auto redFilter = [&](const PointArray &, size_t i) -> bool {
-    return pb->get<2>(i) == targetColor;
-  };
-  size_t redInBox = rt.query(queryBox, redFilter);
-
-  std::cout << "Particulas na AABB (RangeTree):   " << totalInBox << "\n";
-  std::cout << "Vermelhas na AABB (RangeTree):     " << redInBox << "\n";
-
-  // Compara com brute-force já calculado
-  size_t manualTotal = 0, manualRed = 0;
-  for (unsigned i = 0; i < pb->particleCount(); ++i) {
-    if (contained[i]) {
-      ++manualTotal;
-      if (pb->get<2>(i) == targetColor)
-        ++manualRed;
-    }
-  }
-
-  std::cout << "Particulas na AABB (manual):      " << manualTotal << "\n";
-  std::cout << "Vermelhas na AABB (manual):        " << manualRed << "\n";
-
-  bool ok = (totalInBox == manualTotal && redInBox == manualRed);
-  std::cout << "Resultado: " << (ok ? "OK" : "FALHA") << "\n";
+  // 3. Consulta AABB + predicado
+  section("3. Consulta AABB com predicado customizado");
+  size_t rtTotal, rtRed, bfTotal, bfRed;
+  runQuery(rt, pb, queryBox, rtTotal, rtRed, bfTotal, bfRed);
+  logQueryResults(rtTotal, rtRed, bfTotal, bfRed);
 
   // Limpeza
   puts("\nPressione ENTER para sair...");
