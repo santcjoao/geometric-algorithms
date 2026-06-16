@@ -34,8 +34,3 @@ clean:
 
 run: all
 	@./$(TARGET)
-
-format:
-	@echo "Formatando arquivos..."
-	@find . -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | grep -v "/build/" | xargs clang-format -i
-	@echo "Formatação concluída."
