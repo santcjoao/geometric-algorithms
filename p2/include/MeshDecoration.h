@@ -7,6 +7,13 @@
 //
 // Author: Paulo Pagliosa
 // Last revision: 03/06/2026
+// 
+// ========
+// 
+// Class definition for general mesh decoration.
+//
+// Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
+// Last revision: 16/06/2026
 
 #include "DecorationSet.h"
 #include "TriangleMesh.h"
@@ -71,7 +78,68 @@ private:
     // do nothing
   }
 
-}; // MeshDecoration
+}; // MeshDecoration for triangle meshes
+
+/// @brief Mesh decoration for general meshes
+/// @tparam TopoMeshType Type of the Mesh (e.g., Mesh<Topology<std::vector>>)
+/// @tparam V Type of vertex attributes
+/// @tparam HE Type of half-edge attributes
+/// @tparam E Type of edge attributes
+/// @tparam F Type of face attributes
+/// @tparam B Type of boundary attributes
+template <typename TopoMeshType, typename V, typename HE, typename E, typename F, typename B>
+class EMPTY_BASES TopologyDecoration:
+  public SharedObject,
+  public DecorationSet<V, HE, E, F, B>
+{
+public:
+  using VA  = V;
+  using HEA = HE;
+  using EA  = E;
+  using FA  = F;
+  using BA  = B;
+
+  using Base = DecorationSet<V, HE, E, F, B>;
+  using pointer = ObjectPtr<TopologyDecoration>;
+
+  static auto New(const Mesh<Topology>& mesh)
+  {
+    return pointer{new TopologyDecoration{&mesh}};
+  }
+
+  template <typename OtherV, typename OtherHE, typename OtherE, typename OtherF, typename OtherB>
+  static auto New(TopologyDecoration<OtherV, OtherHE, OtherE, OtherF, OtherB>* other)
+  {
+    assert(other != nullptr);
+    return pointer{new TopologyDecoration{std::move(*other)}};
+  }
+
+  Mesh<Topology>* mesh() const { return _mesh;}
+  Mesh<Topology>* mesh()       { return _mesh;}
+
+private:
+  ObjectPtr<Mesh<Topology>> _mesh;
+
+  DecorationSet(const Mesh<Topology>* mesh):
+    Base{
+      mesh->topology().vertexCount(),
+      mesh->topology().halfEdgeCount(),
+      mesh->topology().edgeCount(),
+      mesh->topology().faceCount(),
+      mesh->topology().boundaryCount()
+    },
+    _mesh{mesh}
+  { /* Do nothing */ }
+
+  DecorationSet(DecorationSet&&) noexcept = default;
+
+  template<typename OtherV, typename OtherHE, typename OtherE, typename OtherF, typename OtherB>
+  DecorationSet(TopologyDecoration<OtherV, OtherHE, OtherE, OtherF, OtherB>&& other):
+    Base{std::move(other)},
+    _mesh{other.mesh()}
+  { /* Do nothing */ }
+
+}; // MeshDecoration for general meshes
 
 } // end namespace tcii::cg
 
