@@ -14,29 +14,37 @@ using index_t = unsigned;
 using ProcFunc = std::function<bool(size_t)>;
 
 template<typename T>
-concept is_topology = requires(T t, TriangleMesh m, index_t i, index_t j)
+concept is_topology = requires(T t, index_t i, index_t j, ProcFunc f)
 {
-  // o que topologia deve ter de básico
-  T::collection;
-  T::vert;
-  T::face;
-  T::bounds;
+  // basic topological elements
+  typename T::collection;
+  typename T::vert;
+  typename T::edge;
+  typename T::face;
+  typename T::bounds;
 
   // deve ter um construtor que recebe um TriangleMesh
   requires std::constructible_from<T, TriangleMesh>;
 
-  // funções de processamento
-  t.halfEdge(i); // precisa explicitar que é <E>
-  t.next(i);
-  t.twin(i);
-  t.hasFace(i);
-  t.getVertex(i);
-  t.getEdge(i);
-  t.getFace(i);
-  t.distance(i, j);
-  // tem uma estrutura TopologyTraits<T> que define coisas sobre atributos topologicos
-  // tem atributo templatizado com os elementos topológicos
-  requires true; // bababui
+  // templated functions
+  t.template halfEdge<typename T::vert>(i);
+  t.template halfEdge<typename T::face>(i);
+  t.template halfEdge<typename T::bounds>(i);
+
+  t.template incidentElement<typename T::edge>(i, f);
+  t.template incidentElement<typename T::face>(i, f);
+  
+  t.template kRing<typename T::vert>(i, j, f);
+  t.template kRing<typename T::face>(i, j, f);
+  
+  // basic functions
+  { t.next(i) } -> std::same_as<index_t>;
+  { t.twin(i) } -> std::same_as<index_t>;
+  { t.hasFace(i) } -> std::same_as<bool>;
+  { t.getVertex(i) } -> std::same_as<index_t>;
+  { t.getEdge(i) } -> std::same_as<index_t>;
+  { t.getFace(i) } -> std::same_as<index_t>;
+  { t.distance(i, j) } -> std::same_as<float>;
 };
 
 template<typename T>
@@ -47,6 +55,7 @@ public:
   using topology = T;  
   using collection_type = T::collection;
   using vert = T::vert;
+  using edge = T::edge;
   using face = T::face;
   using bounds = T::bounds;
 
@@ -56,8 +65,6 @@ public:
     // do nothing
   }
 
-  // chamada de funções de processamento
-  // incident faces (vert)
   auto countIncidentFaces(const index_t& v) const
   {
     auto sum = 0;
@@ -73,7 +80,6 @@ public:
     return sum;
   }
 
-  // incident edges (vert)
   auto countIncidentEdges(const index_t& v) const
   {
     auto sum = 0;
@@ -87,7 +93,6 @@ public:
     return sum;
   }
 
-  // perimeter (boundary)
   auto perimeter(const index_t& boundary) const
   {
     auto len = 0.0f;
@@ -95,69 +100,60 @@ public:
 
     do
     {
-      auto he2 = halfEdge<bounds>(boundary);
+      auto he2 = next(he1);
       len += distance(getVertex(he1), getVertex(he2));
+      he1 = he2;
     } while(he1 != halfEdge<bounds>(boundary));
     return len;
   }
 
-  // half edge (vert, boundary e faces)
   template<typename E>
   auto halfEdge(const index_t& i) const
   {
     return _topology.halfEdge<E>(i);
   }
   
-  // next (half edge)
   auto next(const index_t& he) const
   {
     return _topology.next(he);
   }
   
-  // twin (half edge)
   auto twin(const index_t& he) const
   {
     return _topology.twin(he);
   }
   
-  // hasFace (half edge)
   auto hasFace(const index_t& he) const
   {
     return _topology.hasFace(he);
   }
 
-  // vertex (he)
   auto getVertex(const index_t& he) const
   {
     return _topology.getVertex(he);
   }
 
-  // edge (he)
   auto getEdge(const index_t& he) const
   {
     return _topology.getEdge(he);
   }
 
-  // face ()
   auto getFace(const index_t& he) const
   {
     return _topology.getFace(he);
   }
 
-  // distance (e1, e2)
   auto distance(const index_t& e1, const index_t& e2) const
   {
     return _topology.distance(e1, e2);
   }
 
-  // template para incident faces
   template<typename E>
   incidentElement(const index_t& e, ProcFunc f)
   {
     return _topology.incidentElement<E>(e, f);
   }
 
-  // template para k anel
   template<typename E>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {

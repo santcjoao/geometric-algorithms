@@ -116,6 +116,7 @@ concept is_topological_collection = requires(A collection, index_t i)
   // tem operação size()
   { collection.size() } -> std::integral;
   
+  requires std::constructible_from<A, size_t>;
   // next pro iterador se pa? mas entra na brisa de ter
 
   // não pode construtor a partir de tais elementos pq 
@@ -138,32 +139,33 @@ public:
   using bounds = Boundary;
 
   Topology(TriangleMesh& mesh):
-    _vertices{},
-    _halfEdges{},
-    _edges{},
-    _faces{},
+    _vertices{mesh.data().vertexCount()},
+    _halfEdges{6 * mesh.data().vertexCount()},
+    _edges{3 * mesh.data().vertexCount()},
+    _faces{2 * mesh.data().vertexCount()},
     _boundaries{}
   {
-    for(auto i = 0u; i < mesh.data().vertices().size(); ++i)
+    for (auto i = 0u; i < mesh.data().vertexCount(); ++i)
+    {
       _vertices.push_back(mesh.data().vertices()[i]);
-    
-    for(auto i = 0u; i < mesh.data().triangles().size(); ++i)
-      _faces.push_back(mesh.data().triangles()[i]);
-    
-    // TODO: Construir he, e, b e dar uma ordem pra todos os elem top.
+      _vertices[i].heID = std::numeric_limits<index_t>::max();
+    }
+
+    // DS to map the hes. 
+    std::map<std::pair<index_t, index_t>
   }
 
   template<typename E>
   auto halfEdge(const index_t i) const
   {
-    if constexpr (E == vert)
+    if constexpr (std::is_same_v<E, vert>)
       return _vertices[i].heID;
-    else if constexpr (E == face)
+    else if constexpr (std::is_same_v<E, face>)
       return _faces[i].heID;
-    else if constexpr (E == bounds)
+    else if constexpr (std::is_same_v<E, bounds>)
       return _boundaries[i].heID;
     else
-      return -1; // n sei se da
+      return std::numeric_limits<index_t>::max();
   }
 
   // next (half edge)
@@ -205,7 +207,7 @@ public:
   template<typename E>
   incidentElement(const index_t& e, ProcFunc f)
   {
-    if constexpr (E == edge)
+    if constexpr (std::is_same_v<E, edge>)
     {
       auto he = halfEdge<vert>(v);
 
@@ -216,7 +218,7 @@ public:
         he = next(twin(he));
       } while(he != halfEdge<vert>(v));
     }
-    else if constexpr (E == face)
+    else if constexpr (std::is_same_v<E, face>)
     {
       auto he = halfEdge<vert>(v);
 
