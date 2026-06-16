@@ -7,8 +7,7 @@ TARGET    = $(BUILD_DIR)/main.exe
 
 SOURCES   = src/Main.cpp
 UTIL_CPP  = $(wildcard src/util/*.cpp)
-PHYSX_CPP = $(wildcard src/physx/*.cpp)
-SOURCES  += $(UTIL_CPP) $(PHYSX_CPP)
+SOURCES  += $(UTIL_CPP)
 
 OBJECTS   = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
 
