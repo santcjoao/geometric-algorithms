@@ -4,9 +4,9 @@
 namespace tcii::cg
 { // begin namespace tcii::cg
 
-template<typename T> class TopologyTraits;
+//template<typename T> class TopologyTraits;
 
-using 
+//using 
   
 
 } // end namespace tcii::cg

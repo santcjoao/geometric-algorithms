@@ -117,7 +117,7 @@ public:
   template<typename E>
   auto halfEdge(const index_t& i) const
   {
-    return _topology.halfEdge<E>(i);
+    return _topology.template halfEdge<E>(i);
   }
   
   auto next(const index_t& he) const
@@ -158,13 +158,13 @@ public:
   template<typename E>
   void incidentElement(const index_t& e, ProcFunc f)
   {
-    return _topology.incidentElement<E>(e, f);
+    return _topology.template incidentElement<E>(e, f);
   }
 
   template<typename E>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {
-    return _topology.kRing<E>(e, k, f);
+    return _topology.template kRing<E>(e, k, f);
   }
 
 private:

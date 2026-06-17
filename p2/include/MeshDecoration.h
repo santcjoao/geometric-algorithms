@@ -114,7 +114,7 @@ public:
 private:
   ObjectPtr<TopoMeshType> _mesh;
 
-  DecorationSet(const Mesh<TopoMeshType>* mesh):
+  TopologyDecoration(const Mesh<TopoMeshType>* mesh):
     Base{
       mesh->topology().vertexCount(),
       mesh->topology().halfEdgeCount(),
@@ -125,10 +125,10 @@ private:
     _mesh{mesh}
   { /* Do nothing */ }
 
-  DecorationSet(Base&&) noexcept = default;
+  TopologyDecoration(TopologyDecoration&&) noexcept = default;
 
   template<typename OtherV, typename OtherHE, typename OtherE, typename OtherF, typename OtherB>
-  DecorationSet(TopologyDecoration<OtherV, OtherHE, OtherE, OtherF, OtherB>&& other):
+  TopologyDecoration(TopologyDecoration<TopoMeshType, OtherV, OtherHE, OtherE, OtherF, OtherB>&& other):
     Base{std::move(other)},
     _mesh{other.mesh()}
   { /* Do nothing */ }
