@@ -5,7 +5,6 @@
 #include "physx/Renderer.h"
 #include "util/SharedObject.h"
 #include "util/SoA.h"
-#include <tuple>
 
 namespace tcii::physx
 { // begin namespace tcii::physx
@@ -81,7 +80,6 @@ template <typename... Fields>
 class ParticleBuffer : public SharedObject
 {
 public:
-  // using TupleType = std::tuple<Vec3f, Fields...>;
   using SoAType = SoA<DefaultAllocator, unsigned, Vec3f, Fields...>;
   using iterator = ParticleRef<Fields...>;
   using const_iterator = iterator; // Iteradores const = não const (pra não
