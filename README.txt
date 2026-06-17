@@ -18,7 +18,7 @@ Este projeto demonstra a integração e extensão da estrutura de dados **Range 
 
 ## Guia de Execução
 
-O repositório disponibiliza alvos simples através do `Makefile` para facilitar a compilação e o teste do programa. 
+O repositório disponibiliza targets simples através do `Makefile` para facilitar a compilação e o teste do programa. 
 
 ### Comandos:
 - `make` — Compila todo o código-fonte (processando a `main` e classes utilitárias/físicas associadas) e gera o executável no diretório `/build`.
