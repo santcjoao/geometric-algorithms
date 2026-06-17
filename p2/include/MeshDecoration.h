@@ -80,13 +80,8 @@ private:
 
 }; // MeshDecoration for triangle meshes
 
-/// @brief Mesh decoration for general meshes
+/// @brief Mesh decoration for general topologies
 /// @tparam TopoMeshType Type of the Mesh (e.g., Mesh<Topology<std::vector>>)
-/// @tparam V Type of vertex attributes
-/// @tparam HE Type of half-edge attributes
-/// @tparam E Type of edge attributes
-/// @tparam F Type of face attributes
-/// @tparam B Type of boundary attributes
 template <typename TopoMeshType, typename V, typename HE, typename E, typename F, typename B>
 class EMPTY_BASES TopologyDecoration:
   public SharedObject,
@@ -102,25 +97,25 @@ public:
   using Base = DecorationSet<V, HE, E, F, B>;
   using pointer = ObjectPtr<TopologyDecoration>;
 
-  static auto New(const Mesh<Topology>& mesh)
+  static auto New(const TopoMeshType& mesh)
   {
     return pointer{new TopologyDecoration{&mesh}};
   }
 
   template <typename OtherV, typename OtherHE, typename OtherE, typename OtherF, typename OtherB>
-  static auto New(TopologyDecoration<OtherV, OtherHE, OtherE, OtherF, OtherB>* other)
+  static auto New(TopologyDecoration<TopoMeshType,OtherV, OtherHE, OtherE, OtherF, OtherB>* other)
   {
     assert(other != nullptr);
     return pointer{new TopologyDecoration{std::move(*other)}};
   }
 
-  Mesh<Topology>* mesh() const { return _mesh;}
-  Mesh<Topology>* mesh()       { return _mesh;}
+  TopoMeshType* mesh() const { return _mesh;}
+  TopoMeshType* mesh()       { return _mesh;}
 
 private:
-  ObjectPtr<Mesh<Topology>> _mesh;
+  ObjectPtr<TopoMeshType> _mesh;
 
-  DecorationSet(const Mesh<Topology>* mesh):
+  DecorationSet(const Mesh<TopoMeshType>* mesh):
     Base{
       mesh->topology().vertexCount(),
       mesh->topology().halfEdgeCount(),
@@ -131,7 +126,7 @@ private:
     _mesh{mesh}
   { /* Do nothing */ }
 
-  DecorationSet(DecorationSet&&) noexcept = default;
+  DecorationSet(Base&&) noexcept = default;
 
   template<typename OtherV, typename OtherHE, typename OtherE, typename OtherF, typename OtherB>
   DecorationSet(TopologyDecoration<OtherV, OtherHE, OtherE, OtherF, OtherB>&& other):
@@ -139,7 +134,7 @@ private:
     _mesh{other.mesh()}
   { /* Do nothing */ }
 
-}; // MeshDecoration for general meshes
+}; // TopologyDecoration
 
 } // end namespace tcii::cg
 
