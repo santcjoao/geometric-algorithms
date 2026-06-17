@@ -236,7 +236,7 @@ public:
   using bounds_collection = Collection<bounds>;
 
   static_assert(is_topological_collection<vert_collection>, 
-    "A coleção fornecida não satisfaz os requisitos topológicos."); // requires não?
+    "The provided collection does not satisfy the topological requirements."); // requires não?
 
   Topology(TriangleMesh& mesh):
     _vertices{},
@@ -254,7 +254,7 @@ public:
     _faces.reserve(2 * numFaces);
     _boundaries.reserve(0);
 
-    std::cerr << "[TOPO] Malha: " << numVerts << "v, " << numFaces << "f. Reservando..." << std::endl;
+    std::cout << "[INFO] [Topology] Mesh: " << numVerts << "v, " << numFaces << "f. Reserving memory." << std::endl;
 
     for (auto i = 0u; i < numVerts; ++i)
     {
@@ -265,7 +265,7 @@ public:
       _vertices.push_back(v);
     }
 
-    std::cerr << "[TOPO] Vertices inseridos: " << _vertices.size() << std::endl;
+    std::cout << "[INFO] [Topology] Inserted vertices: " << _vertices.size() << std::endl;
 
     // DS to process twins
     std::map<std::pair<index_t, index_t>, index_t> edgeMap;
