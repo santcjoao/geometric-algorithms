@@ -31,7 +31,7 @@ concept is_topology = requires(T t, index_t i, index_t k, ProcFunc f)
   typename T::bounds;
 
   // deve ter um construtor que recebe um TriangleMesh
-  requires std::constructible_from<T, TriangleMesh>;
+  requires std::constructible_from<T, TriangleMesh&>;
 
   // templated functions
   t.template halfEdge<typename T::vert>(i);
@@ -70,6 +70,11 @@ public:
     _topology{mesh}
   {
     // do nothing
+  }
+
+  const topology& getTopology() const
+  {
+    return _topology;
   }
 
   auto countIncidentFaces(const index_t& v) const
@@ -117,54 +122,54 @@ public:
   template<typename E>
   auto halfEdge(const index_t& i) const
   {
-    return _topology.halfEdge<E>(i);
+    return _topology.template halfEdge<E>(i);
   }
   
   auto next(const index_t& he) const
   {
-    return _topology.next(he);
+    return _topology.template next(he);
   }
   
   auto twin(const index_t& he) const
   {
-    return _topology.twin(he);
+    return _topology.template twin(he);
   }
   
   auto hasFace(const index_t& he) const
   {
-    return _topology.hasFace(he);
+    return _topology.template hasFace(he);
   }
 
   auto getVertex(const index_t& he) const
   {
-    return _topology.getVertex(he);
+    return _topology.template getVertex(he);
   }
 
   auto getEdge(const index_t& he) const
   {
-    return _topology.getEdge(he);
+    return _topology.template getEdge(he);
   }
 
   auto getFace(const index_t& he) const
   {
-    return _topology.getFace(he);
+    return _topology.template getFace(he);
   }
 
   auto distance(const index_t& e1, const index_t& e2) const
   {
-    return _topology.distance(e1, e2);
+    return _topology.template distance(e1, e2);
   }
 
   template<typename E>
   void incidentElement(const index_t& e, ProcFunc f)
   {
-    return _topology.incidentElement<E>(e, f);
+    return _topology.template incidentElement<E>(e, f);
   }
 
   template<typename E>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {
-    return _topology.kRing<E>(e, k, f);
+    return _topology.template kRing<E>(e, k, f);
   }
 
 private:

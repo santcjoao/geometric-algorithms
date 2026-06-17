@@ -29,7 +29,7 @@ public:
 
   explicit FreeListVector(size_t reserve_size)
   {
-    _data.reserve(reserve_size);
+    reserve(reserve_size);
   }
 
   T& operator[](index_t index)
@@ -42,6 +42,11 @@ public:
   {
     assert(index < _data.size());
     return _data[index];
+  }
+
+  void reserve(size_t n)
+  {
+    _data.reserve(n);
   }
 
   size_t size() const
