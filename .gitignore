@@ -2,10 +2,12 @@
 .vs/
 .vscode/
 x64/
+obj/
 *.ilk
 *.pdb
 *.vcxproj.user
 *.exe
+*.o
 *.iobj
 *.ipdb
 
