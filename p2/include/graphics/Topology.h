@@ -8,7 +8,8 @@
 // Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
 // Last revision: 17/06/2026
 
-#include "../TriangleMesh.h"
+#include "TriangleMesh.h"
+#include "FreeListVector.h"
 #include <map>
 #include <algorithm>
 #include <limits>
@@ -61,15 +62,22 @@ concept is_topological_collection = requires(A collection, index_t i, A::value_t
   typename A::value_type;
   // é indexável -> tem uma ordem
   collection[i];
+
   // tem operação size()
   { collection.size() } -> std::integral;
   
+  // Exige o método reserve
+  collection.reserve(n);
+
   requires std::constructible_from<A, size_t>;
   // next pro iterador se pa? mas entra na brisa de ter
 
   // não pode construtor a partir de tais elementos pq 
   // insert ACHO QUE PRECISA ? Só que pra elementos topológicos
   collection.push_back(val);
+
+  // Exige o método is_active para checagem de índices reciclados no iterador
+  { collection.is_active(i) } -> std::same_as<bool>;
 
   // remove ACHO QUE PRECISA ?
   
@@ -110,9 +118,8 @@ struct Boundary
   index_t heID;
 };
 
-/* template<typename A>
-requires IsTopoElement<A::value_type> && is_topological_collection<A> */
-template<template <typename> class CollectionType>
+template<typename A>
+requires IsTopoElement<A::value_type> && is_topological_collection<A>
 class TopologyIteratorBase
 {
 public:
@@ -124,24 +131,12 @@ public:
   using reference = value_type&;
   using difference_type = std::ptrdiff_t;
 
-  using vert = Vertex;
-  using he = HalfEdge;
-  using edge = Edge;
-  using face = Face;
-  using bounds = Boundary;
-
-  // A injeção perfeita do seu template
-  using vert_collection = CollectionType<vert>;
-  using he_collection = CollectionType<he>;
-  using edge_collection = CollectionType<edge>;
-  using face_collection = CollectionType<face>;
-  using bounds_collection = CollectionType<bounds>;
-
   TopologyIteratorBase(const A& collection, index_t pos = 0u):
     _value{collection},
     _pos{0}
   {
-    // do nothing
+    if (_pos < _value.size() && !_value.is_active(_pos))
+      increment();
   }
 
   bool operator ==(const TopologyIteratorBase<A>& other)
@@ -193,27 +188,48 @@ private:
   void increment()
   {
     assert(_pos < _value.size());
-    _pos++;
+    do
+    {
+      _pos++;
+    } while (_pos < _value.size() && !_value.is_active(_pos));
   }
 
   void decrement()
   {
     assert(_pos > 0);
-    _pos--;
+    do
+    {
+      _pos--;
+    } while (_pos > 0 && !_value.is_active(_pos));
   }
 };
 
-template<typename A>
-requires is_topological_collection<A>
+template
+<
+  template <typename...> class Collection = FreeListVector, 
+  typename V = Vertex,
+  typename HE = HalfEdge,
+  typename E = Edge,
+  typename F = Face,
+  typename B = Boundary
+>
 class Topology
 {
 public:
-  using collection = A;
-  using vert = Vertex;
-  using he = HalfEdge;
-  using edge = Edge;
-  using face = Face;
-  using bounds = Boundary;
+  using vert   = V;
+  using he     = HE;
+  using edge   = E;
+  using face   = F;
+  using bounds = B;
+
+  using vert_collection   = Collection<vert  >;
+  using he_collection     = Collection<he    >;
+  using edge_collection   = Collection<edge  >;
+  using face_collection   = Collection<face  >;
+  using bounds_collection = Collection<bounds>;
+
+  static_assert(is_topological_collection<vert_collection>, 
+    "A coleção fornecida não satisfaz os requisitos topológicos.");
 
   Topology(TriangleMesh& mesh):
     _vertices{},
@@ -403,30 +419,30 @@ public:
   auto begin()
   {
     if constexpr (std::is_same_v<E, vert>)
-      return TopologyIteratorBase<collection<vert>>(_vertices, 0);
+      return TopologyIteratorBase<vert_collection>(_vertices, 0);
     else if constexpr (std::is_same_v<E, he>)
-      return TopologyIteratorBase<collection<he>>(_halfEdges, 0);
+      return TopologyIteratorBase<he_collection>(_halfEdges, 0);
     else if constexpr (std::is_same_v<E, edge>)
-      return TopologyIteratorBase<collection<edge>>(_edges, 0);
+      return TopologyIteratorBase<edge_collection>(_edges, 0);
     else if constexpr (std::is_same_v<E, face>)
-      return TopologyIteratorBase<collection<face>>(_faces, 0);
+      return TopologyIteratorBase<face_collection>(_faces, 0);
     else if constexpr (std::is_same_v<E, bounds>)
-      return TopologyIteratorBase<collection<bounds>>(_boundaries, 0);
+      return TopologyIteratorBase<bounds_collection>(_boundaries, 0);
   }
 
   template<typename E>
   auto end()
   {
     if constexpr (std::is_same_v<E, vert>)
-      return TopologyIteratorBase<collection<vert>>(_vertices, _vertices.size());
+      return TopologyIteratorBase<vert_collection>(_vertices, _vertices.size());
     else if constexpr (std::is_same_v<E, he>)
-      return TopologyIteratorBase<collection<he>>(_halfEdges, _halfEdges.size());
+      return TopologyIteratorBase<he_collection>(_halfEdges, _halfEdges.size());
     else if constexpr (std::is_same_v<E, edge>)
-      return TopologyIteratorBase<collection<edge>>(_edges, _edges.size());
+      return TopologyIteratorBase<edge_collection>(_edges, _edges.size());
     else if constexpr (std::is_same_v<E, face>)
-      return TopologyIteratorBase<collection<face>>(_faces, _faces.size());
+      return TopologyIteratorBase<face_collection>(_faces, _faces.size());
     else if constexpr (std::is_same_v<E, bounds>)
-      return TopologyIteratorBase<collection<bounds>>(_boundaries, _boundaries.size());
+      return TopologyIteratorBase<bounds_collection>(_boundaries, _boundaries.size());
   }
 
   template<typename E>
@@ -629,11 +645,11 @@ public:
   }
 
 private:
-  collection<vert> _vertices;
-  collection<he> _halfEdges;
-  collection<edge> _edges;
-  collection<face> _faces;
-  collection<bounds> _boundaries;
+  vert_collection _vertices;
+  he_collection _halfEdges;
+  edge_collection _edges;
+  face_collection _faces;
+  bounds_collection _boundaries;
 };
 
 } // end namespace tcii::cg
