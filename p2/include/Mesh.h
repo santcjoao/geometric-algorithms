@@ -14,7 +14,7 @@ using index_t = unsigned;
 using ProcFunc = std::function<bool(size_t)>;
 
 template<typename T>
-concept is_topology = requires(T t, index_t i, index_t j, ProcFunc f)
+concept is_topology = requires(T t, index_t i, index_t k, ProcFunc f)
 {
   // basic topological elements
   typename T::collection;
@@ -34,8 +34,8 @@ concept is_topology = requires(T t, index_t i, index_t j, ProcFunc f)
   t.template incidentElement<typename T::edge>(i, f);
   t.template incidentElement<typename T::face>(i, f);
   
-  t.template kRing<typename T::vert>(i, j, f);
-  t.template kRing<typename T::face>(i, j, f);
+  t.template kRing<typename T::vert>(i, k, f);
+  t.template kRing<typename T::face>(i, k, f);
   
   // basic functions
   { t.next(i) } -> std::same_as<index_t>;
@@ -44,7 +44,7 @@ concept is_topology = requires(T t, index_t i, index_t j, ProcFunc f)
   { t.getVertex(i) } -> std::same_as<index_t>;
   { t.getEdge(i) } -> std::same_as<index_t>;
   { t.getFace(i) } -> std::same_as<index_t>;
-  { t.distance(i, j) } -> std::same_as<float>;
+  { t.distance(i, k) } -> std::same_as<float>;
 };
 
 template<typename T>
@@ -149,7 +149,7 @@ public:
   }
 
   template<typename E>
-  incidentElement(const index_t& e, ProcFunc f)
+  void incidentElement(const index_t& e, ProcFunc f)
   {
     return _topology.incidentElement<E>(e, f);
   }

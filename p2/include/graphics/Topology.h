@@ -2,17 +2,71 @@
 #define __Topology_h
 
 #include "../TriangleMesh.h"
+#include <map>
+#include <algorithm>
+#include <limits>
+#include <type_traits>
+#include <concepts>
 
 /// @brief This is an example of a Topology, more specifically the given topology of P2.
 namespace tcii::cg
 { // begin namespace tcii::cg
 
-// meta programming to define what is a topological element?
-
 using index_t = unsigned;
-using TM = TriangleMesh;
 
 enum Elements { VertexData = 0, HalfEdgeData, EdgeData, FaceData, BoundaryData };
+
+// classe para topological element base? e ai os caba herda
+
+struct Vertex;
+struct HalfEdge;
+struct Edge;
+struct Face;
+struct Boundary;
+
+template <typename E>
+struct is_topo_element: std::false_type {};
+
+template <>
+struct is_topo_element<Vertex>: std::true_type {};
+
+template <>
+struct is_topo_element<HalfEdge>: std::true_type {};
+
+template <>
+struct is_topo_element<Edge>: std::true_type {};
+
+template <>
+struct is_topo_element<Face>: std::true_type {};
+
+template <>
+struct is_topo_element<Boundary>: std::true_type {};
+
+template <typename E>
+constexpr bool is_topo_element_v = is_topo_element<E>::value;
+
+template <typename E>
+concept IsTopoElement = is_topo_element_v<E>;
+
+template<typename A>
+concept is_topological_collection = requires(A collection, index_t i, A::value_type val)
+{
+  typename A::value_type;
+  // é indexável -> tem uma ordem
+  collection[i];
+  // tem operação size()
+  { collection.size() } -> std::integral;
+  
+  requires std::constructible_from<A, size_t>;
+  // next pro iterador se pa? mas entra na brisa de ter
+
+  // não pode construtor a partir de tais elementos pq 
+  // insert ACHO QUE PRECISA ? Só que pra elementos topológicos
+  collection.push_back(val);
+
+  // remove ACHO QUE PRECISA ?
+  
+};
 
 struct Vertex
 {
@@ -49,84 +103,77 @@ struct Boundary
   index_t heID;
 };
 
-// template<typename A> class Topology;
-
-template<typename T, typename A> // talvez seja independente de A?
+template<typename A>
+requires IsTopoElement<A::value_type> && is_topological_collection<A>
 class TopologyIteratorBase
 {
 public:
+  using element_type = A::value_type;
   using collection_type = A;
   using iterator_category = std::bidirectional_iterator_tag;
   using value_type = T;
-  using pointer = T *;
-  using reference = T &;
+  using pointer = T*;
+  using reference = T&;
   using difference_type = std::ptrdiff_t;
+
+  bool operator ==(const TopologyIteratorBase<A>& other)
+  {
+    return _value[_pos] == other._value[other._pos];
+  }
+
+  bool operator !=(const TopologyIteratorBase<A>& other)
+  {
+    return !operator==(other);
+  }
+
+  auto& operator*() const { return _value[_pos]; }
+
+  auto operator->() const { return &operator*(); }
+
+  auto& operator ++()
+  {
+    increment();
+    return *this;
+  }
+
+  auto operator ++(int)
+  {
+    auto temp = *this;
+
+    increment();
+    return temp;
+  }
+
+  auto& operator --()
+  {
+    decrement();
+    return *this;
+  }
+
+  auto operator --(int)
+  {
+    auto temp = *this;
+
+    decrement();
+    return temp;
+  }
+
+private:
+  A& _value;
+  index_t _pos{};
 
   void increment()
   {
-
+    assert(_pos < _value.size());
+    _pos++;
   }
 
   void decrement()
   {
-
+    assert(_pos > 0);
+    _pos--;
   }
-
-  bool operator ==()
-  {
-
-  }
-
-  bool operator !=()
-  {
-
-  }
-
-  auto& operator*() const { return ((TreeNode<T> *)_node)->_value; }
-
-  auto operator->() const { return &operator*(); }
-
-  auto& operator ++() // prefix increment
-  {
-
-  }
-
-  auto operator ++(int) // postfix increment
-  {
-
-  }
-
-  auto& operator --() // prefix increment
-  {
-
-  }
-
-  auto operator --(int) // postfix increment
-  {
-
-  }
-
-private:
-  T _value;  
 };
-
-template<typename A>
-concept is_topological_collection = requires(A collection, index_t i)
-{
-  // é indexável -> tem uma ordem
-  collection[i];
-  // tem operação size()
-  { collection.size() } -> std::integral;
-  
-  requires std::constructible_from<A, size_t>;
-  // next pro iterador se pa? mas entra na brisa de ter
-
-  // não pode construtor a partir de tais elementos pq 
-  // insert ACHO QUE PRECISA ? Só que pra elementos topológicos
-  // remove ACHO QUE PRECISA ?
-};
-
-
 
 template<typename A>
 requires is_topological_collection<A>
@@ -140,22 +187,186 @@ public:
   using face = Face;
   using bounds = Boundary;
 
+  // TODO
   Topology(TriangleMesh& mesh):
-    _vertices{mesh.data().vertexCount()},
-    _halfEdges{6 * mesh.data().vertexCount()},
-    _edges{3 * mesh.data().vertexCount()},
-    _faces{2 * mesh.data().vertexCount()},
+    _vertices{},
+    _halfEdges{},
+    _edges{},
+    _faces{},
     _boundaries{}
   {
-    for (auto i = 0u; i < mesh.data().vertexCount(); ++i)
+    auto numVerts = mesh.data().vertexCount();
+    auto numFaces = mesh.data().triangleCount();
+
+    for (auto i = 0u; i < numVerts; ++i)
     {
-      _vertices.push_back(mesh.data().vertices()[i]);
-      _vertices[i].heID = std::numeric_limits<index_t>::max();
+      vert v;
+      v.id = i;
+      v.heID = std::numeric_limits<index_t>::max();
+      v.pos = mesh.data().vertices()[i];
+      _vertices.push_back(v);
     }
 
-    // DS to map the hes. 
-    std::map<std::pair<index_t, index_t>
+    // DS to process twins
+    std::map<std::pair<index_t, index_t>, index_t> edgeMap;
+
+    for (auto i = 0u; i < numFaces; ++i)
+    {
+      auto tri = mesh.data().triangles()[i];
+
+      index_t he0_id = _halfEdges.size();
+      index_t he1_id = he0_id + 1;
+      index_t he2_id = he1_id + 1;
+      
+      he he0, he1, he2;
+
+      he0.vID = tri[0];
+      he0.fID = i;
+      he0.next = he1_id;
+      he0.prev = he2_id;
+
+      he1.vID = tri[1];
+      he1.fID = i;
+      he1.next = he2_id;
+      he1.prev = he0_id;
+
+      he2.vID = tri[2];
+      he2.fID = i;
+      he2.next = he0_id;
+      he2.prev = he1_id;
+
+      face f;
+      f.id = i;
+      f.heID = he0_id;
+      _faces.push_back(f);
+
+      // updating he_ids
+      _vertices[tri[0]].heID = he0_id;
+      _vertices[tri[1]].heID = he1_id;
+      _vertices[tri[2]].heID = he2_id;
+
+      _halfEdges.push_back(he0);
+      _halfEdges.push_back(he1);
+      _halfEdges.push_back(he2);
+
+      // verifying twins to each one of the hes
+      index_t current_he_ids[3] = {he0_id, he1_id, he2_id};
+      index_t v_origins[3] = {tri[0], tri[1], tri[2]};
+      index_t v_dests[3] = {tri[1], tri[2], tri[0]};
+
+      for (int j = 0; j < 3; ++j)
+      {
+        index_t current_id = current_he_ids[j];
+        auto key = std::minmax(v_origins[j], v_dests[j]);
+
+        if (edgeMap.find(key) == edgeMap.end())
+        {
+          // key was not found: no twin yet
+          edgeMap[key] = current_id;
+        }
+        else
+        {
+          // found twin
+          index_t twin_id = edgeMap[key];
+
+          // "sew" twins
+          _halfEdges[current_id].twin = twin_id;
+          _halfEdges[twin_id].twin = current_id;
+
+          // make edge
+          edge e;
+          e.id = _edges.size();
+          e.twins[0] = current_id;
+          e.twins[1] = twin_id;
+          _edges.push_back(e);
+
+          // already solved pair
+          edgeMap.erase(key);
+        }
+      }
+    }
+
+    // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
+    std::vector<index_t> boundaryHalfEdges;
+    std::map<index_t, index_t> boundaryStartsAt;
+    
+    for (auto const& [chave, id_h_in] : edgeMap)
+    {
+      // A semi-aresta interna (h_in) vai do vértice A para o vértice B
+      index_t v_A = _halfEdges[id_h_in].vID;
+      index_t v_B = _halfEdges[_halfEdges[id_h_in].next].vID;
+
+      index_t id_h_out = _halfEdges.size();
+        
+      he h_out;
+      h_out.vID = v_B; // Nasce em B e vai para A
+      h_out.fID = std::numeric_limits<index_t>::max(); // Sem face (é borda)
+        
+      // Costura os Twins
+      h_out.twin = id_h_in;
+      _halfEdges[id_h_in].twin = id_h_out;
+
+      // Cria a Aresta (Edge)
+      edge e;
+      e.id = _edges.size();
+      e.twins[0] = id_h_in;
+      e.twins[1] = id_h_out;
+        
+      h_out.eID = e.id;
+      _halfEdges[id_h_in].eID = e.id;
+        
+      _edges.push_back(e);
+      _halfEdges.push_back(h_out);
+      boundaryHalfEdges.push_back(id_h_out);
+
+      // Mapeamento Vital: A semi-aresta de borda que nasce em B é a h_out
+      boundaryStartsAt[v_B] = id_h_out;
+    }
+
+    // edge map is no need
+
+    // echaining the loops
+    for (index_t id_h_out : boundaryHalfEdges)
+    {
+      // Precisamos saber onde essa h_out termina (que é o vértice A)
+      // Para descobrir o vértice A, basta olhar a origem da sua gêmea interna!
+      index_t v_A = _halfEdges[_halfEdges[id_h_out].twin].vID;
+
+      // O próximo passo lógico é a semi-aresta de borda que nasce em A
+      index_t next_h_out = boundaryStartsAt[v_A];
+
+      _halfEdges[id_h_out].next = next_h_out;
+      _halfEdges[next_h_out].prev = id_h_out;
+    }
+
+    // --- PASSO 3: Extração dos Boundaries ---
+    std::vector<bool> visited(boundaryHalfEdges.size(), false);
+
+    for (size_t i = 0; i < boundaryHalfEdges.size(); ++i)
+    {
+      if (visited[i]) continue;
+
+      bounds b;
+      b.id = _boundaries.size();
+      b.heID = boundaryHalfEdges[i];
+      _boundaries.push_back(b);
+
+      // Dar a volta no buraco para marcar todas como visitadas
+      index_t current_he = boundaryHalfEdges[i];
+      do
+      {
+        // Encontra qual é o índice real dessa current_he dentro do vetor boundaryHalfEdges
+        // (Usamos std::find para atualizar o array de visitados corretamente)
+        auto it = std::find(boundaryHalfEdges.begin(), boundaryHalfEdges.end(), current_he);
+        if (it != boundaryHalfEdges.end())
+          visited[std::distance(boundaryHalfEdges.begin(), it)] = true;
+
+        current_he = _halfEdges[current_he].next;
+      } while(current_he != boundaryHalfEdges[i]);
+    }
   }
+
+  // TODO: find, begin e end templatizados
 
   template<typename E>
   auto halfEdge(const index_t i) const
@@ -207,44 +418,50 @@ public:
   }
 
   template<typename E>
-  incidentElement(const index_t& e, ProcFunc f)
+  void incidentElement(const index_t& e, ProcFunc f)
   {
     if constexpr (std::is_same_v<E, edge>)
     {
-      auto he = halfEdge<vert>(v);
+      auto he0 = halfEdge<vert>(e);
 
       do
       {
-        auto e = getEdge(he);
-        f(e);
-        he = next(twin(he));
-      } while(he != halfEdge<vert>(v));
+        auto ed = getEdge(he0);
+        f(ed);
+        he0 = next(twin(he0));
+      } while(he0 != halfEdge<vert>(e));
     }
     else if constexpr (std::is_same_v<E, face>)
     {
-      auto he = halfEdge<vert>(v);
+      auto he0 = halfEdge<vert>(e);
 
       do
       {
-        if (hasFace(he))
+        if (hasFace(he0))
         {
-          auto fc = getFace(he);
+          auto fc = getFace(he0);
           f(fc);
         }
 
-        he = next(twin(he));
-      } while(he != halfEdge<vert>(v));
+        he0 = next(twin(he0));
+      } while(he0 != halfEdge<vert>(e));
     }
     else
       return;
   }
 
-  // template para k anel
+  // TODO
   template<typename E>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {
-    if constexpr (E == vert)
-    else if constexpr (E == face)
+    if constexpr (std::is_same_v<E, vert>)
+    {
+
+    } 
+    else if constexpr (std::is_same_v<E, face>)
+    {
+
+    }
     else
       return;
   }
