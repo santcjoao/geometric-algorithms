@@ -80,6 +80,7 @@ class ObjectPtr
 {
 public:
   using pointer = ObjectPtr<T>;
+  using element_type = T;
 
   ObjectPtr() = default;
 

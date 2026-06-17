@@ -84,11 +84,6 @@ public:
     return true;
   }
 
-  void reserve(size_t capacity)
-  {
-    _data.reserve(capacity);
-  }
-
 private:
   std::vector<T> _data;
   std::vector<index_t> _free_indices;

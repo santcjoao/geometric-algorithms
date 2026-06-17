@@ -69,7 +69,7 @@ bool testMesh(const ObjectPtr<TriangleMesh>& mesh, const char* filename = "malha
   }
   */
 
-  if (mesh.data().vertexCount() == 0 || mesh.data().triangleCount() == 0)
+  if (mesh->data().vertexCount() == 0 || mesh->data().triangleCount() == 0)
   {
     std::cerr << "[Erro] A malha lida está vazia ou corrompida.\n";
     return false;

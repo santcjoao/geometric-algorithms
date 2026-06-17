@@ -108,19 +108,19 @@ public:
     return pointer{new TopologyDecoration{std::move(*other)}};
   }
 
-  TopoMeshType* mesh() const { return _mesh;}
-  TopoMeshType* mesh()       { return _mesh;}
+  const TopoMeshType* mesh() const { return _mesh;}
+  const TopoMeshType* mesh()       { return _mesh;}
 
 private:
-  ObjectPtr<TopoMeshType> _mesh;
+  const TopoMeshType* _mesh;
 
   TopologyDecoration(const TopoMeshType* mesh):
     Base{
-      mesh->getTopology().vertexCount(), // Note que mudei para getTopology() aqui também!
-      mesh->getTopology().halfEdgeCount(),
-      mesh->getTopology().edgeCount(),
-      mesh->getTopology().faceCount(),
-      mesh->getTopology().boundaryCount()
+      static_cast<index_t>(mesh->getTopology().vertexCount()),
+      static_cast<index_t>(mesh->getTopology().halfEdgeCount()),
+      static_cast<index_t>(mesh->getTopology().edgeCount()),
+      static_cast<index_t>(mesh->getTopology().faceCount()),
+      static_cast<index_t>(mesh->getTopology().boundaryCount())
     },
     _mesh{mesh}
   { /* Do nothing */ }
