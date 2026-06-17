@@ -110,21 +110,35 @@ struct Boundary
   index_t heID;
 };
 
-template<typename A>
-requires IsTopoElement<A::value_type> && is_topological_collection<A>
+/* template<typename A>
+requires IsTopoElement<A::value_type> && is_topological_collection<A> */
+template<template <typename> class CollectionType>
 class TopologyIteratorBase
 {
 public:
   using element_type = A::value_type;
   using collection_type = A;
   using iterator_category = std::bidirectional_iterator_tag;
-  using value_type = T;
-  using pointer = T*;
-  using reference = T&;
+  using value_type = typename A::value_type;
+  using pointer = value_type*;
+  using reference = value_type&;
   using difference_type = std::ptrdiff_t;
 
+  using vert = Vertex;
+  using he = HalfEdge;
+  using edge = Edge;
+  using face = Face;
+  using bounds = Boundary;
+
+  // A injeção perfeita do seu template
+  using vert_collection = CollectionType<vert>;
+  using he_collection = CollectionType<he>;
+  using edge_collection = CollectionType<edge>;
+  using face_collection = CollectionType<face>;
+  using bounds_collection = CollectionType<bounds>;
+
   TopologyIteratorBase(const A& collection, index_t pos = 0u):
-    _value{collection}
+    _value{collection},
     _pos{0}
   {
     // do nothing
@@ -210,6 +224,12 @@ public:
   {
     auto numVerts = mesh.data().vertexCount();
     auto numFaces = mesh.data().triangleCount();
+
+    _vertices.reserve(numVerts);
+    _halfEdges.reserve(3 * numVerts * 2);
+    _edges.reserve(3 * numVerts);
+    _faces.reserve(2 * numFaces);
+    _boundaries.reserve(0);
 
     for (auto i = 0u; i < numVerts; ++i)
     {
@@ -461,8 +481,8 @@ public:
   // distance (e1, e2)
   auto distance(const index_t& e1, const index_t& e2) const
   {
-    auto p1 = _vertices[v1].pos;
-    auto p2 = _vertices[v2].pos;
+    auto p1 = _vertices[e1].pos;
+    auto p2 = _vertices[e2].pos;
     auto diff = Vec3f{p1.x - p2.x, p1.y - p2.y, p1.z - p2.z};
     return std::sqrt(diff.x*diff.x + diff.y*diff.y + diff.z*diff.z);
   }
@@ -477,7 +497,8 @@ public:
       do
       {
         auto ed = getEdge(he0);
-        f(ed);
+        if (!f(ed)) return; 
+
         he0 = next(twin(he0));
       } while(he0 != halfEdge<vert>(e));
     }
@@ -490,7 +511,7 @@ public:
         if (hasFace(he0))
         {
           auto fc = getFace(he0);
-          f(fc);
+          if (!f(fc)) return;
         }
 
         he0 = next(twin(he0));
