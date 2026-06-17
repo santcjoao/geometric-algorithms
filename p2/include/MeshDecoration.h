@@ -21,7 +21,6 @@
 namespace tcii::cg
 { // begin namespace tcii::cg
 
-
 /////////////////////////////////////////////////////////////////////
 //
 // MeshDecoration: class for triangle mesh decoration
