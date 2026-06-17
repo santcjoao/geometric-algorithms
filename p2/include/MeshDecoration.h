@@ -114,13 +114,13 @@ public:
 private:
   ObjectPtr<TopoMeshType> _mesh;
 
-  TopologyDecoration(const Mesh<TopoMeshType>* mesh):
+  TopologyDecoration(const TopoMeshType* mesh):
     Base{
-      mesh->topology().vertexCount(),
-      mesh->topology().halfEdgeCount(),
-      mesh->topology().edgeCount(),
-      mesh->topology().faceCount(),
-      mesh->topology().boundaryCount()
+      mesh->getTopology().vertexCount(), // Note que mudei para getTopology() aqui também!
+      mesh->getTopology().halfEdgeCount(),
+      mesh->getTopology().edgeCount(),
+      mesh->getTopology().faceCount(),
+      mesh->getTopology().boundaryCount()
     },
     _mesh{mesh}
   { /* Do nothing */ }

@@ -18,7 +18,7 @@ using namespace tcii::cg;
 /// @brief Stage 1: Create initial decoration and color vertices
 auto stage1 = [](const Mesh<Topology<FreeListVector>>& mesh) {
 
-  if (mesh.topology().vertexCount() < 3)
+  if (mesh.getTopology().vertexCount() < 3)
     throw std::runtime_error("Malha degenerada: Vértices insuficientes na geometria base.");
   
   using Color = Vec3f;
@@ -59,7 +59,7 @@ auto stage3 = [](auto previousDecoration) {
   return td;
 };
 
-bool testMesh(const TriangleMesh& mesh, const char* filename = "malha")
+bool testMesh(const ObjectPtr<TriangleMesh>& mesh, const char* filename = "malha")
 {
   /* if (!mesh) não faz sentido para referências.
   if (!mesh)
@@ -83,7 +83,7 @@ int main()
   auto filename = "../../meshes/f-16.obj";
   auto triangleMesh = readOBJ(filename);
 
-  if (!testMesh(*triangleMesh, filename))
+  if (!testMesh(triangleMesh, filename))
     return EXIT_FAILURE;
 
   try

@@ -8,15 +8,16 @@
 // Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
 // Last revision: 17/06/2026
 
-#include "TriangleMesh.h"
 #include "FreeListVector.h"
-#include <map>
-#include <queue>
+#include "Mesh.h"
+#include "TriangleMesh.h"
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <limits>
+#include <map>
+#include <queue>
 #include <type_traits>
-#include <concepts>
 
 /// @brief This is an example of a Topology, more specifically the given topology of P2.
 namespace tcii::cg
@@ -219,6 +220,8 @@ template
 class Topology
 {
 public:
+  using collection = Collection<V>;
+
   using vert   = V;
   using he     = HE;
   using edge   = E;
@@ -418,49 +421,57 @@ public:
     }
   }
 
-  template<typename Elm>
+  template<typename TopoElement>
   auto begin()
   {
-    if constexpr (std::is_same_v<Elm, vert>)
+    if constexpr (std::is_same_v<TopoElement, vert>)
       return TopologyIteratorBase<vert_collection>(_vertices, 0);
-    else if constexpr (std::is_same_v<Elm, he>)
+    else if constexpr (std::is_same_v<TopoElement, he>)
       return TopologyIteratorBase<he_collection>(_halfEdges, 0);
-    else if constexpr (std::is_same_v<Elm, edge>)
+    else if constexpr (std::is_same_v<TopoElement, edge>)
       return TopologyIteratorBase<edge_collection>(_edges, 0);
-    else if constexpr (std::is_same_v<Elm, face>)
+    else if constexpr (std::is_same_v<TopoElement, face>)
       return TopologyIteratorBase<face_collection>(_faces, 0);
-    else if constexpr (std::is_same_v<Elm, bounds>)
+    else if constexpr (std::is_same_v<TopoElement, bounds>)
       return TopologyIteratorBase<bounds_collection>(_boundaries, 0);
   }
 
-  template<typename Elm>
+  template<typename TopoElement>
   auto end()
   {
-    if constexpr (std::is_same_v<Elm, vert>)
+    if constexpr (std::is_same_v<TopoElement, vert>)
       return TopologyIteratorBase<vert_collection>(_vertices, _vertices.size());
-    else if constexpr (std::is_same_v<Elm, he>)
+    else if constexpr (std::is_same_v<TopoElement, he>)
       return TopologyIteratorBase<he_collection>(_halfEdges, _halfEdges.size());
-    else if constexpr (std::is_same_v<Elm, edge>)
+    else if constexpr (std::is_same_v<TopoElement, edge>)
       return TopologyIteratorBase<edge_collection>(_edges, _edges.size());
-    else if constexpr (std::is_same_v<Elm, face>)
+    else if constexpr (std::is_same_v<TopoElement, face>)
       return TopologyIteratorBase<face_collection>(_faces, _faces.size());
-    else if constexpr (std::is_same_v<Elm, bounds>)
+    else if constexpr (std::is_same_v<TopoElement, bounds>)
       return TopologyIteratorBase<bounds_collection>(_boundaries, _boundaries.size());
   }
 
-  template<typename Elm>
+  template<typename TopoElement>
   auto halfEdge(const index_t i) const
   {
-    if constexpr (std::is_same_v<Elm, vert>)
+    if constexpr (std::is_same_v<TopoElement, vert>)
       return _vertices[i].heID;
-    else if constexpr (std::is_same_v<Elm, face>)
+    else if constexpr (std::is_same_v<TopoElement, face>)
       return _faces[i].heID;
-    else if constexpr (std::is_same_v<Elm, bounds>)
+    else if constexpr (std::is_same_v<TopoElement, bounds>)
       return _boundaries[i].heID;
     else
       return std::numeric_limits<index_t>::max();
   }
 
+  // Alterar no Data depois
+  auto vertexCount() const { return _vertices.size(); }
+  auto halfEdgeCount() const { return _halfEdges.size(); }
+  auto edgeCount() const { return _edges.size(); }
+  auto faceCount() const { return _faces.size(); }
+  auto boundaryCount() const { return _boundaries.size(); }
+
+  // next (half edge)
   auto next(const index_t& he) const
   {
     return _halfEdges[he].next;
@@ -499,10 +510,10 @@ public:
     return std::sqrt(diff.x*diff.x + diff.y*diff.y + diff.z*diff.z);
   }
 
-  template<typename Elm>
+  template<typename TopoElement>
   void incidentElement(const index_t& e, ProcFunc f)
   {
-    if constexpr (std::is_same_v<Elm, edge>)
+    if constexpr (std::is_same_v<TopoElement, edge>)
     {
       auto he0 = halfEdge<vert>(e);
 
@@ -514,7 +525,7 @@ public:
         he0 = next(twin(he0));
       } while(he0 != halfEdge<vert>(e));
     }
-    else if constexpr (std::is_same_v<Elm, face>)
+    else if constexpr (std::is_same_v<TopoElement, face>)
     {
       auto he0 = halfEdge<vert>(e);
 
@@ -533,7 +544,8 @@ public:
       return;
   }
 
-  template<typename Elm>
+  // TODO
+  template<typename TopoElement>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {
     if (k == 0) return; // Um 0-anel não possui faces adjacentes a processar
@@ -547,7 +559,7 @@ public:
 
     // --- PASSO 1: Semeando a Fila (Nível 1) ---
 
-    if constexpr (std::is_same_v<Elm, vert>)
+    if constexpr (std::is_same_v<TopoElement, vert>)
     {
       // Para um vértice, o 1-anel são todas as faces que incidem nele.
       auto he0 = halfEdge<vert>(e);
@@ -573,7 +585,7 @@ public:
         curr_he = next(twin(curr_he));
       } while (curr_he != he0);
     } 
-    else if constexpr (std::is_same_v<Elm, face>)
+    else if constexpr (std::is_same_v<TopoElement, face>)
     {
       // Para uma face, o 1-anel são as faces que compartilham suas arestas.
       // Marcamos a própria face como visitada para não adicioná-la aos anéis subsequentes.
