@@ -1,6 +1,13 @@
 #ifndef __Topology_h
 #define __Topology_h
 
+// OVERVIEW: Topology.h
+// ========
+// Class definition for general topology.
+//
+// Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
+// Last revision: 17/06/2026
+
 #include "../TriangleMesh.h"
 #include <map>
 #include <algorithm>

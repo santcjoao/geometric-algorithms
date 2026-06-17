@@ -1,6 +1,13 @@
 #ifndef __Mesh_h
 #define __Mesh_h
 
+// OVERVIEW: Mesh.h
+// ========
+// Class definition for general mesh.
+//
+// Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
+// Last revision: 17/06/2026
+
 #include "TriangleMesh.h"
 #include <functional>
 #include <type_traits>
