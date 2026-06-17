@@ -46,7 +46,8 @@ public:
 
   // Acesso genérico a qualquer campo por índice
   // (0 = posição, 1 = primeiro campo, ...)
-  template <size_t I> auto &get() const
+  template <size_t I>
+  auto &get() const
   {
     return _buffer->template get<I>(_idx);
   }
@@ -80,7 +81,7 @@ template <typename... Fields>
 class ParticleBuffer : public SharedObject
 {
 public:
-  using TupleType = std::tuple<Vec3f, Fields...>;
+  // using TupleType = std::tuple<Vec3f, Fields...>;
   using SoAType = SoA<DefaultAllocator, unsigned, Vec3f, Fields...>;
   using iterator = ParticleRef<Fields...>;
   using const_iterator = iterator; // Iteradores const = não const (pra não
