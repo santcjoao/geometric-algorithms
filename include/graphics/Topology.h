@@ -346,6 +346,114 @@ public:
       }
     }
 
+    std::cout << "[INFO] [Topology] Faces and twins: " << _halfEdges.size() << " HEs, "
+              << _edges.size() << " edges. Boundaries left in map: "
+              << edgeMap.size() << std::endl;
+
+    // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
+    std::vector<index_t> boundaryHalfEdges;
+    std::map<index_t, index_t> boundaryStartsAt;
+    
+    for (auto const& [chave, id_h_in] : edgeMap)
+    {
+      // A semi-aresta interna (h_in) vai do vértice A para o vértice B
+      index_t v_B = _halfEdges[_halfEdges[id_h_in].next].vID;
+
+      index_t id_h_out = _halfEdges.size();
+        
+      he h_out;
+      h_out.vID = v_B; // Nasce em B e vai para A
+      h_out.fID = std::numeric_limits<index_t>::max(); // Sem face (é borda)
+        
+      // Costura os Twins
+      h_out.twin = id_h_in;
+      _halfEdges[id_h_in].twin = id_h_out;
+
+      // Cria a Aresta (Edge)
+      edge e;
+      e.id = _edges.size();
+      e.twins[0] = id_h_in;
+      e.twins[1] = id_h_out;
+        
+      h_out.eID = e.id;
+      _halfEdges[id_h_in].eID = e.id;
+        
+      _edges.push_back(e);
+      _halfEdges.push_back(h_out);
+      boundaryHalfEdges.push_back(id_h_out);
+
+      // Mapeamento Vital: A semi-aresta de borda que nasce em B é a h_out
+      boundaryStartsAt[v_B] = id_h_out;
+    }
+
+    std::cout << "[INFO] [Topology] Created boundary HEs: " << boundaryHalfEdges.size() << std::endl;
+
+    // edge map is no need
+
+    // echaining the loops
+    for (index_t id_h_out : boundaryHalfEdges)
+    {
+      // Precisamos saber onde essa h_out termina (que é o vértice A)
+      // Para descobrir o vértice A, basta olhar a origem da sua gêmea interna!
+      index_t v_A = _halfEdges[_halfEdges[id_h_out].twin].vID;
+
+      // Verifica se existe uma borda de saída saindo do vértice A
+      auto it = boundaryStartsAt.find(v_A);
+      if (it == boundaryStartsAt.end()) {
+          std::cerr << "[ERROR] [Topology] Non-manifold mesh or degenerate hole.\n";
+          std::cerr << "Vertex " << v_A << " has no outgoing boundary half-edge.\n";
+          throw std::runtime_error("Invalid mesh for Half-Edge (non-manifold).");
+      }
+
+      // O próximo passo lógico é a semi-aresta de borda que nasce em A
+      index_t next_h_out = it->second;
+
+      _halfEdges[id_h_out].next = next_h_out;
+      _halfEdges[next_h_out].prev = id_h_out;
+    }
+
+    std::cout << "[INFO] [Topology] Boundary chaining completed." << std::endl;
+
+    // --- PASSO 3: Extração dos Boundaries ---
+    std::vector<bool> visited(boundaryHalfEdges.size(), false);
+
+    for (size_t i = 0; i < boundaryHalfEdges.size(); ++i)
+    {
+      if (visited[i]) continue;
+
+      bounds b;
+      b.id = _boundaries.size();
+      b.heID = boundaryHalfEdges[i];
+      _boundaries.push_back(b);
+
+      // Dar a volta no buraco para marcar todas como visitadas
+      index_t current_he = boundaryHalfEdges[i];
+      size_t guard = 0;
+      const size_t maxIter = _halfEdges.size() * 2;
+      do
+      {
+        if (++guard > maxIter)
+        {
+          std::cerr << "[TOPO][ERRO] Loop infinito detectado na extracao de boundary "
+                    << _boundaries.size() - 1
+                    << "! HE atual: " << current_he
+                    << ", HE inicio: " << boundaryHalfEdges[i]
+                    << ", iteracoes: " << guard << std::endl;
+          throw std::runtime_error("Loop infinito na extracao de boundaries.");
+        }
+
+        // Encontra qual é o índice real dessa current_he dentro do vetor boundaryHalfEdges
+        // (Usamos std::find para atualizar o array de visitados corretamente)
+        auto it = std::find(boundaryHalfEdges.begin(), boundaryHalfEdges.end(), current_he);
+        if (it != boundaryHalfEdges.end())
+          visited[std::distance(boundaryHalfEdges.begin(), it)] = true;
+
+        current_he = _halfEdges[current_he].next;
+      } while(current_he != boundaryHalfEdges[i]);
+    }
+
+    std::cout << "[INFO] [Topology] Extracted boundaries: " << _boundaries.size() << std::endl;
+    std::cout << "[INFO] [Topology] Construction completed." << std::endl;
   }
 
   template<typename TopoElement>
