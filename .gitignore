@@ -1,14 +1,24 @@
-﻿# Add any directories, files, or patterns you don't want to be tracked by version control
-.vs/
-.vscode/
-x64/
-obj/
+*.o
+*.obj
+*.exe
+*.out
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
 *.ilk
 *.pdb
-*.vcxproj.user
-*.exe
-*.o
 *.iobj
 *.ipdb
+*.gch
+*.pch
+*.d
 
+.vs/
 .vscode/
+
+build/
+obj/
+x64/
