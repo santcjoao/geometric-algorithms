@@ -34,7 +34,9 @@ template <typename... Fields> class ParticleBuffer;
 /// @brief Proxy para uma partícula individual (iterador)
 ///        Fornece acesso referencial às propriedades da partícula.
 /// @tparam ...Fields
-template <typename... Fields> class ParticleRef {
+template <typename... Fields>
+class ParticleRef
+{
 public:
   using Buffer = ParticleBuffer<Fields...>;
 
@@ -74,7 +76,9 @@ private:
 
 /// @brief Armazena partículas em SoA e gerencia os atributos
 /// @tparam ...Fields
-template <typename... Fields> class ParticleBuffer : public SharedObject {
+template <typename... Fields>
+class ParticleBuffer : public SharedObject
+{
 public:
   using TupleType = std::tuple<Vec3f, Fields...>;
   using SoAType = SoA<DefaultAllocator, unsigned, Vec3f, Fields...>;

@@ -9,7 +9,8 @@ namespace tcii::physx
 
 using namespace cg;
 
-class ParticleSystemBase : public Actor {
+class ParticleSystemBase : public Actor
+{
 protected:
   ParticleSystemBase() { setName("PS %d", ++_nextId); }
 
