@@ -10,6 +10,7 @@
 #include "MeshDecoration.h"
 #include "Pipeline.h"
 #include "TriangleMesh.h"
+#include <chrono>
 #include <iostream>
 #include <vector>
 
@@ -61,13 +62,11 @@ auto stage3 = [](auto previousDecoration) {
 
 bool testMesh(const ObjectPtr<TriangleMesh>& mesh, const char* filename = "malha")
 {
-  /* if (!mesh) não faz sentido para referências.
   if (!mesh)
   {
     std::cerr << "[Erro] Não foi possível ler o arquivo: " << filename << '\n';
     return false;
   }
-  */
 
   if (mesh->data().vertexCount() == 0 || mesh->data().triangleCount() == 0)
   {
@@ -88,11 +87,27 @@ int main()
 
   try
   {
+    std::cerr << "[DEBUG] Construindo topologia..." << std::endl;
+    auto t0 = std::chrono::steady_clock::now();
+
     Mesh<Topology<FreeListVector>> mesh(*triangleMesh);
+
+    auto t1 = std::chrono::steady_clock::now();
+    std::cerr << "[DEBUG] Topologia construida em "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
+              << " ms" << std::endl;
 
     Pipeline renderPipeline(stage1, stage2);
 
+    std::cerr << "[DEBUG] Executando pipeline..." << std::endl;
+    auto t2 = std::chrono::steady_clock::now();
+
     auto finalDecoratedMesh = renderPipeline.execute(mesh);
+
+    auto t3 = std::chrono::steady_clock::now();
+    std::cerr << "[DEBUG] Pipeline executado em "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
+              << " ms" << std::endl;
 
     std::cout << "Pipeline executado com sucesso! Malha pronta para processamento.\n";
   }

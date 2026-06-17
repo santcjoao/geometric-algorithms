@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <concepts>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <map>
 #include <queue>
@@ -253,6 +254,8 @@ public:
     _faces.reserve(2 * numFaces);
     _boundaries.reserve(0);
 
+    std::cerr << "[TOPO] Malha: " << numVerts << "v, " << numFaces << "f. Reservando..." << std::endl;
+
     for (auto i = 0u; i < numVerts; ++i)
     {
       vert v;
@@ -261,6 +264,8 @@ public:
       v.pos = mesh.data().vertices()[i];
       _vertices.push_back(v);
     }
+
+    std::cerr << "[TOPO] Vertices inseridos: " << _vertices.size() << std::endl;
 
     // DS to process twins
     std::map<std::pair<index_t, index_t>, index_t> edgeMap;
@@ -341,6 +346,10 @@ public:
       }
     }
 
+    std::cerr << "[TOPO] Faces e twins: " << _halfEdges.size() << " HEs, "
+              << _edges.size() << " edges. Bordas restantes no mapa: "
+              << edgeMap.size() << std::endl;
+
     // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
     std::vector<index_t> boundaryHalfEdges;
     std::map<index_t, index_t> boundaryStartsAt;
@@ -378,6 +387,8 @@ public:
       boundaryStartsAt[v_B] = id_h_out;
     }
 
+    std::cerr << "[TOPO] Boundary HEs criadas: " << boundaryHalfEdges.size() << std::endl;
+
     // edge map is no need
 
     // echaining the loops
@@ -394,6 +405,8 @@ public:
       _halfEdges[next_h_out].prev = id_h_out;
     }
 
+    std::cerr << "[TOPO] Encadeamento de boundaries concluido" << std::endl;
+
     // --- PASSO 3: Extração dos Boundaries ---
     std::vector<bool> visited(boundaryHalfEdges.size(), false);
 
@@ -408,8 +421,20 @@ public:
 
       // Dar a volta no buraco para marcar todas como visitadas
       index_t current_he = boundaryHalfEdges[i];
+      size_t guard = 0;
+      const size_t maxIter = _halfEdges.size() * 2;
       do
       {
+        if (++guard > maxIter)
+        {
+          std::cerr << "[TOPO][ERRO] Loop infinito detectado na extracao de boundary "
+                    << _boundaries.size() - 1
+                    << "! HE atual: " << current_he
+                    << ", HE inicio: " << boundaryHalfEdges[i]
+                    << ", iteracoes: " << guard << std::endl;
+          throw std::runtime_error("Loop infinito na extracao de boundaries.");
+        }
+
         // Encontra qual é o índice real dessa current_he dentro do vetor boundaryHalfEdges
         // (Usamos std::find para atualizar o array de visitados corretamente)
         auto it = std::find(boundaryHalfEdges.begin(), boundaryHalfEdges.end(), current_he);
@@ -419,6 +444,9 @@ public:
         current_he = _halfEdges[current_he].next;
       } while(current_he != boundaryHalfEdges[i]);
     }
+
+    std::cerr << "[TOPO] Boundaries extraidos: " << _boundaries.size() << std::endl;
+    std::cerr << "[TOPO] Construcao completa." << std::endl;
   }
 
   template<typename TopoElement>
