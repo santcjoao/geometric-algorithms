@@ -116,6 +116,13 @@ public:
   using reference = T&;
   using difference_type = std::ptrdiff_t;
 
+  TopologyIteratorBase(const A& collection, index_t pos = 0u):
+    _value{collection}
+    _pos{0}
+  {
+    // do nothing
+  }
+
   bool operator ==(const TopologyIteratorBase<A>& other)
   {
     return _value[_pos] == other._value[other._pos];
@@ -160,7 +167,7 @@ public:
 
 private:
   A& _value;
-  index_t _pos{};
+  index_t _pos;
 
   void increment()
   {
@@ -187,7 +194,6 @@ public:
   using face = Face;
   using bounds = Boundary;
 
-  // TODO
   Topology(TriangleMesh& mesh):
     _vertices{},
     _halfEdges{},
@@ -366,7 +372,35 @@ public:
     }
   }
 
-  // TODO: find, begin e end templatizados
+  template<typename E>
+  auto begin()
+  {
+    if constexpr (std::is_same_v<E, vert>)
+      return TopologyIteratorBase<collection<vert>>(_vertices, 0);
+    else if constexpr (std::is_same_v<E, he>)
+      return TopologyIteratorBase<collection<he>>(_halfEdges, 0);
+    else if constexpr (std::is_same_v<E, edge>)
+      return TopologyIteratorBase<collection<edge>>(_edges, 0);
+    else if constexpr (std::is_same_v<E, face>)
+      return TopologyIteratorBase<collection<face>>(_faces, 0);
+    else if constexpr (std::is_same_v<E, bounds>)
+      return TopologyIteratorBase<collection<bounds>>(_boundaries, 0);
+  }
+
+  template<typename E>
+  auto end()
+  {
+    if constexpr (std::is_same_v<E, vert>)
+      return TopologyIteratorBase<collection<vert>>(_vertices, _vertices.size());
+    else if constexpr (std::is_same_v<E, he>)
+      return TopologyIteratorBase<collection<he>>(_halfEdges, _halfEdges.size());
+    else if constexpr (std::is_same_v<E, edge>)
+      return TopologyIteratorBase<collection<edge>>(_edges, _edges.size());
+    else if constexpr (std::is_same_v<E, face>)
+      return TopologyIteratorBase<collection<face>>(_faces, _faces.size());
+    else if constexpr (std::is_same_v<E, bounds>)
+      return TopologyIteratorBase<collection<bounds>>(_boundaries, _boundaries.size());
+  }
 
   template<typename E>
   auto halfEdge(const index_t i) const
@@ -384,37 +418,46 @@ public:
   // next (half edge)
   auto next(const index_t& he) const
   {
+    return _halfEdges[he].next;
   }
   
   // twin (half edge)
   auto twin(const index_t& he) const
   {
+    return _halfEdges[he].twin;
   }
   
   // hasFace (half edge)
-  auto hasFace(const index_t& he) const
+  bool hasFace(const index_t& he) const
   {
+    return _halfEdges[he].fID != std::numeric_limits<index_t>::max();
   }
 
   // vertex (he)
   auto getVertex(const index_t& he) const
   {
+    return _halfEdges[he].vID;
   }
 
   // edge (he)
   auto getEdge(const index_t& he) const
   {
+    return _halfEdges[he].eID;
   }
 
   // face ()
   auto getFace(const index_t& he) const
   {
+    return _halfEdges[he].fID;
   }
 
   // distance (e1, e2)
   auto distance(const index_t& e1, const index_t& e2) const
   {
-    
+    auto p1 = _vertices[v1].pos;
+    auto p2 = _vertices[v2].pos;
+    auto diff = Vec3f{p1.x - p2.x, p1.y - p2.y, p1.z - p2.z};
+    return std::sqrt(diff.x*diff.x + diff.y*diff.y + diff.z*diff.z);
   }
 
   template<typename E>
@@ -454,16 +497,107 @@ public:
   template<typename E>
   void kRing(const index_t& e, size_t k, ProcFunc f)
   {
+    if (k == 0) return; // Um 0-anel não possui faces adjacentes a processar
+
+    // Vetor para evitar ciclos e não reprocessar a mesma face no 2-anel, 3-anel, etc.
+    // Inicializado com false para todas as faces.
+    std::vector<bool> visited(_faces.size(), false);
+      
+    // Fila que armazena pares: {ID da Face, Nível Atual do Anel}
+    std::queue<std::pair<index_t, size_t>> q; 
+
+    // --- PASSO 1: Semeando a Fila (Nível 1) ---
+
     if constexpr (std::is_same_v<E, vert>)
     {
+      // Para um vértice, o 1-anel são todas as faces que incidem nele.
+      auto he0 = halfEdge<vert>(e);
+      auto curr_he = he0;
 
+      do
+      {
+        if (hasFace(curr_he))
+        {
+          index_t fID = getFace(curr_he);
+          if (!visited[fID])
+          {
+            visited[fID] = true;
+            q.push({fID, 1});
+            
+            // O ProcFunc retorna um bool. É padrão usá-lo para early-exit.
+            // Se f() retornar false, interrompemos a travessia.
+            if (!f(fID)) return; 
+          }
+        }
+        // Circula pelo vértice (funciona perfeitamente mesmo com buracos 
+        // graças às suas semi-arestas de borda explícitas)
+        curr_he = next(twin(curr_he));
+      } while (curr_he != he0);
     } 
     else if constexpr (std::is_same_v<E, face>)
     {
+      // Para uma face, o 1-anel são as faces que compartilham suas arestas.
+      // Marcamos a própria face como visitada para não adicioná-la aos anéis subsequentes.
+      visited[e] = true; 
 
+      auto he0 = halfEdge<face>(e);
+      auto curr_he = he0;
+
+      do
+      {
+        auto t = twin(curr_he); // A gêmea pertence à face vizinha
+        if (hasFace(t))
+        {
+          index_t fID = getFace(t);
+          if (!visited[fID])
+          {
+            visited[fID] = true;
+            q.push({fID, 1});
+            
+            if (!f(fID)) return;
+          }
+        }
+        curr_he = next(curr_he); // Circula pelas arestas da face original
+      } while (curr_he != he0);
     }
     else
+    {
+      // Se o tipo E não for vértice nem face, a operação não é suportada.
       return;
+    }
+
+    // --- PASSO 2: Expandindo para k > 1 (BFS) ---
+    
+    while (!q.empty())
+    {
+      auto [current_face, current_level] = q.front();
+      q.pop();
+
+      // Se a face que tiramos da fila já atingiu o limite k, 
+      // não precisamos olhar para os vizinhos dela.
+      if (current_level >= k) continue;
+
+      // Obtém as faces adjacentes à face atual (compartilham aresta)
+      auto he0 = halfEdge<face>(current_face);
+      auto curr_he = he0;
+
+      do
+      {
+        auto t = twin(curr_he);
+        if (hasFace(t)) // Ignora buracos (fID == max)
+        {
+          index_t fID = getFace(t);
+          if (!visited[fID])
+          {
+            visited[fID] = true;
+            q.push({fID, current_level + 1});
+            
+            if (!f(fID)) return;
+          }
+        }
+        curr_he = next(curr_he);
+      } while (curr_he != he0);
+    }
   }
 
 private:
