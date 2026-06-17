@@ -236,7 +236,7 @@ public:
   using bounds_collection = Collection<bounds>;
 
   static_assert(is_topological_collection<vert_collection>, 
-    "A coleção fornecida não satisfaz os requisitos topológicos."); // requires não?
+    "The provided collection does not satisfy the topological requirements."); // requires não?
 
   Topology(TriangleMesh& mesh):
     _vertices{},
@@ -254,7 +254,7 @@ public:
     _faces.reserve(2 * numFaces);
     _boundaries.reserve(0);
 
-    std::cerr << "[TOPO] Malha: " << numVerts << "v, " << numFaces << "f. Reservando..." << std::endl;
+    std::cout << "[INFO] [Topology] Mesh: " << numVerts << "v, " << numFaces << "f. Reserving memory." << std::endl;
 
     for (auto i = 0u; i < numVerts; ++i)
     {
@@ -265,7 +265,7 @@ public:
       _vertices.push_back(v);
     }
 
-    std::cerr << "[TOPO] Vertices inseridos: " << _vertices.size() << std::endl;
+    std::cout << "[INFO] [Topology] Inserted vertices: " << _vertices.size() << std::endl;
 
     // DS to process twins
     std::map<std::pair<index_t, index_t>, index_t> edgeMap;
@@ -346,8 +346,8 @@ public:
       }
     }
 
-    std::cerr << "[TOPO] Faces e twins: " << _halfEdges.size() << " HEs, "
-              << _edges.size() << " edges. Bordas restantes no mapa: "
+    std::cout << "[INFO] [Topology] Faces and twins: " << _halfEdges.size() << " HEs, "
+              << _edges.size() << " edges. Boundaries left in map: "
               << edgeMap.size() << std::endl;
 
     // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
@@ -357,7 +357,6 @@ public:
     for (auto const& [chave, id_h_in] : edgeMap)
     {
       // A semi-aresta interna (h_in) vai do vértice A para o vértice B
-      index_t v_A = _halfEdges[id_h_in].vID;
       index_t v_B = _halfEdges[_halfEdges[id_h_in].next].vID;
 
       index_t id_h_out = _halfEdges.size();
@@ -387,7 +386,7 @@ public:
       boundaryStartsAt[v_B] = id_h_out;
     }
 
-    std::cerr << "[TOPO] Boundary HEs criadas: " << boundaryHalfEdges.size() << std::endl;
+    std::cout << "[INFO] [Topology] Created boundary HEs: " << boundaryHalfEdges.size() << std::endl;
 
     // edge map is no need
 
@@ -398,14 +397,22 @@ public:
       // Para descobrir o vértice A, basta olhar a origem da sua gêmea interna!
       index_t v_A = _halfEdges[_halfEdges[id_h_out].twin].vID;
 
+      // Verifica se existe uma borda de saída saindo do vértice A
+      auto it = boundaryStartsAt.find(v_A);
+      if (it == boundaryStartsAt.end()) {
+          std::cerr << "[ERROR] [Topology] Non-manifold mesh or degenerate hole.\n";
+          std::cerr << "Vertex " << v_A << " has no outgoing boundary half-edge.\n";
+          throw std::runtime_error("Invalid mesh for Half-Edge (non-manifold).");
+      }
+
       // O próximo passo lógico é a semi-aresta de borda que nasce em A
-      index_t next_h_out = boundaryStartsAt[v_A];
+      index_t next_h_out = it->second;
 
       _halfEdges[id_h_out].next = next_h_out;
       _halfEdges[next_h_out].prev = id_h_out;
     }
 
-    std::cerr << "[TOPO] Encadeamento de boundaries concluido" << std::endl;
+    std::cout << "[INFO] [Topology] Boundary chaining completed." << std::endl;
 
     // --- PASSO 3: Extração dos Boundaries ---
     std::vector<bool> visited(boundaryHalfEdges.size(), false);
@@ -445,8 +452,8 @@ public:
       } while(current_he != boundaryHalfEdges[i]);
     }
 
-    std::cerr << "[TOPO] Boundaries extraidos: " << _boundaries.size() << std::endl;
-    std::cerr << "[TOPO] Construcao completa." << std::endl;
+    std::cout << "[INFO] [Topology] Extracted boundaries: " << _boundaries.size() << std::endl;
+    std::cout << "[INFO] [Topology] Construction completed." << std::endl;
   }
 
   template<typename TopoElement>

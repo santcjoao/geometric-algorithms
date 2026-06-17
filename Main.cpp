@@ -20,7 +20,7 @@ using namespace tcii::cg;
 auto stage1 = [](const Mesh<Topology<FreeListVector>>& mesh) {
 
   if (mesh.getTopology().vertexCount() < 3)
-    throw std::runtime_error("Malha degenerada: Vértices insuficientes na geometria base.");
+    throw std::runtime_error("Degenerate mesh: insufficient vertices in the base geometry.");
   
   using Color = Vec3f;
   using VA = ElementSoA<Color>;
@@ -36,7 +36,6 @@ auto stage2 = [](auto previousDecoration) {
   using Color  = Vec3f;
   using Normal = Vec3f;
 
-  using OldVA = typename decltype(previousDecoration)::element_type::VA;
   using VA = ElementSoA<Color, Normal>;
   using TD = TopologyDecoration<Mesh<Topology<FreeListVector>>, VA, void, void, void, void>;
   
@@ -54,7 +53,7 @@ auto stage3 = [](auto previousDecoration) {
   auto td = TD::New(previousDecoration.get());
 
   if (td->mesh()->topology().edgeCount() == 0)
-    throw std::runtime_error("Impossível calcular pesos: a malha não possui arestas definidas.");
+    throw std::runtime_error("Unable to calculate weights: the mesh has no defined edges.");
 
   set<EdgeData, 0>(*td, 0, 1.5f);
   return td;
@@ -64,13 +63,13 @@ bool testMesh(const ObjectPtr<TriangleMesh>& mesh, const char* filename = "malha
 {
   if (!mesh)
   {
-    std::cerr << "[Erro] Não foi possível ler o arquivo: " << filename << '\n';
+    std::cerr << "[ERROR] Could not read file: " << filename << '\n';
     return false;
   }
 
   if (mesh->data().vertexCount() == 0 || mesh->data().triangleCount() == 0)
   {
-    std::cerr << "[Erro] A malha lida está vazia ou corrompida.\n";
+    std::cerr << "[ERROR] The read mesh is empty or corrupted.\n";
     return false;
   }
 
@@ -87,34 +86,34 @@ int main()
 
   try
   {
-    std::cerr << "[DEBUG] Construindo topologia..." << std::endl;
+    std::cout << "[INFO] Building topology." << std::endl;
     auto t0 = std::chrono::steady_clock::now();
 
     Mesh<Topology<FreeListVector>> mesh(*triangleMesh);
 
     auto t1 = std::chrono::steady_clock::now();
-    std::cerr << "[DEBUG] Topologia construida em "
+    std::cout << "[INFO] Topology built in "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
               << " ms" << std::endl;
 
     Pipeline renderPipeline(stage1, stage2);
 
-    std::cerr << "[DEBUG] Executando pipeline..." << std::endl;
+    std::cout << "[INFO] Executing pipeline." << std::endl;
     auto t2 = std::chrono::steady_clock::now();
 
     auto finalDecoratedMesh = renderPipeline.execute(mesh);
 
     auto t3 = std::chrono::steady_clock::now();
-    std::cerr << "[DEBUG] Pipeline executado em "
+    std::cout << "[INFO] Pipeline executed in "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
               << " ms" << std::endl;
 
-    std::cout << "Pipeline executado com sucesso! Malha pronta para processamento.\n";
+    std::cout << "[INFO] Pipeline executed successfully. Mesh ready for processing.\n";
   }
   catch (const std::exception& e)
   {
-      std::cerr << "\n[Falha] Interrupção nos estágios do Pipeline de Decoração.\n"
-                << "Motivo: " << e.what() << '\n';
+      std::cerr << "\n[ERROR] Interruption in the Decoration Pipeline stages.\n"
+                << "Reason: " << e.what() << '\n';
       return EXIT_FAILURE;
   }
 

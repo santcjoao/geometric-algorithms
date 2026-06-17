@@ -66,7 +66,7 @@ class Arrays
 {
 public:
   template <typename Allocator>
-  void allocate(size_t n)
+  void allocate(size_t)
   {
     // do nothing
   }
@@ -77,17 +77,17 @@ public:
     // do nothing
   }
 
-  void get(index_t i, std::tuple<Args...>& t) const
+  void get(index_t, std::tuple<Args...>&) const
   {
     // do nothing
   }
 
-  void set(index_t i, const std::tuple<Args...>& t)
+  void set(index_t, const std::tuple<Args...>&)
   {
     // do nothing
   }
 
-  void swap(index_t i, index_t j)
+  void swap(index_t, index_t)
   {
     // do nothing
   }
