@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif // _MSC_VER
 
-#include "../include/TriangleMesh.h"
+#include "TriangleMesh.h"
 #include <filesystem>
 #include <utility>
 
