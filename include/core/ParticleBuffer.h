@@ -7,14 +7,24 @@
 #include "util/SoA.h"
 #include <tuple>
 
-namespace tcii::physx {
+namespace tcii::physx
+{ // begin namespace tcii::physx
+
 using namespace cg;
 
-/// @brief Alocador padrão para a SoA
-struct DefaultAllocator {
-  template <typename T> static T *allocate(size_t n) { return new T[n]; }
+struct DefaultAllocator
+{
+  template <typename T>
+  static T *allocate(size_t n)
+  {
+    return new T[n];
+  }
 
-  template <typename T> static void free(T *ptr) { delete[] ptr; }
+  template <typename T>
+  static void free(T *ptr)
+  {
+    delete[] ptr;
+  }
 };
 
 // Forward declaration
@@ -30,26 +40,28 @@ public:
 
   ParticleRef(Buffer *buffer, unsigned idx) : _buffer(buffer), _idx(idx) {}
 
-  // Acesso somente leitura à posição (primeiro atributo)
   const Vec3f &position() const { return _buffer->position(_idx); }
 
-  // Acesso genérico a qualquer campo por índice (0 = posição, 1 = primeiro
-  // campo, ...)
-  template <size_t I> auto &get() const {
+  // Acesso genérico a qualquer campo por índice
+  // (0 = posição, 1 = primeiro campo, ...)
+  template <size_t I> auto &get() const
+  {
     return _buffer->template get<I>(_idx);
   }
 
-  // Operadores necessários para ParticleRef se comporte como um iterador
-  bool operator!=(const ParticleRef &other) const {
+  bool operator!=(const ParticleRef &other) const
+  {
     return _buffer != other._buffer || _idx != other._idx;
   }
 
-  ParticleRef &operator++() {
+  ParticleRef &operator++()
+  {
     ++_idx;
     return *this;
   }
 
-  ParticleRef operator++(int) {
+  ParticleRef operator++(int)
+  {
     ParticleRef tmp = *this;
     ++_idx;
     return tmp;
@@ -75,29 +87,31 @@ public:
   auto particleCount() const { return _particleCount; }
   auto capacity() const { return _data.size(); }
 
-  // Adiciona uma nova partícula ao buffer (posição + fields variádicos)
-  void add(const Vec3f &p, const Fields &...fields) {
+  void add(const Vec3f &p, const Fields &...fields)
+  {
     if (_particleCount >= capacity())
       return;
     _data.set(_particleCount, p, fields...);
     ++_particleCount;
   }
 
-  // Remove todas as partículas (mantém capacidade)
   void clear() { _particleCount = 0; }
 
-  // Acesso à posição de uma partícula
   Vec3f &position(unsigned i) { return _data.template get<0>(i); }
   const Vec3f &position(unsigned i) const { return _data.template get<0>(i); }
 
-  // Acesso a qualquer campo por índice
-  template <size_t I> auto &get(unsigned i) { return _data.template get<I>(i); }
-
-  template <size_t I> const auto &get(unsigned i) const {
+  template <size_t I>
+  auto &get(unsigned i)
+  {
     return _data.template get<I>(i);
   }
 
-  // Calcula a bounding box englobando todas as posições das partículas
+  template <size_t I>
+  const auto &get(unsigned i) const
+  {
+    return _data.template get<I>(i);
+  }
+
   Bounds3f bounds() const;
 
   // Renderização não utilizada
@@ -106,10 +120,12 @@ public:
   // Iteradores
   iterator begin() { return iterator(this, 0); }
   iterator end() { return iterator(this, _particleCount); }
-  const_iterator begin() const {
+  const_iterator begin() const
+  {
     return const_iterator(const_cast<ParticleBuffer *>(this), 0);
   }
-  const_iterator end() const {
+  const_iterator end() const
+  {
     return const_iterator(const_cast<ParticleBuffer *>(this), _particleCount);
   }
 
@@ -121,7 +137,8 @@ private:
 };
 
 template <typename... Fields>
-Bounds3f ParticleBuffer<Fields...>::bounds() const {
+Bounds3f ParticleBuffer<Fields...>::bounds() const
+{
   Bounds3f b;
   for (unsigned i = 0; i < _particleCount; ++i)
     b.inflate(position(i));

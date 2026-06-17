@@ -4,7 +4,8 @@
 #include "core/ParticleBuffer.h"
 #include "physx/Actor.h"
 
-namespace tcii::physx { // begin namespace tcii::physx
+namespace tcii::physx
+{ // begin namespace tcii::physx
 
 using namespace cg;
 
@@ -17,7 +18,9 @@ private:
 
 }; // ParticleSystemBase
 
-template <typename... Fields> class ParticleSystem : public ParticleSystemBase {
+template <typename... Fields>
+class ParticleSystem : public ParticleSystemBase
+{
 public:
   using PA = ParticleBuffer<Fields...>;
 
@@ -32,29 +35,32 @@ public:
 
 private:
   ObjectPtr<PA> _particles;
-
 }; // ParticleSystem
 
 template <typename... Fields>
-void ParticleSystem<Fields...>::setParticleBuffer(unsigned capacity) {
-  if (_particles) {
+void ParticleSystem<Fields...>::setParticleBuffer(unsigned capacity)
+{
+  if (_particles)
+  {
     if (_particles->capacity() == capacity)
       return;
     _particles = nullptr;
-  } else if (!capacity)
+  }
+  else if (!capacity)
     return;
+
   _particles = new PA{capacity};
 }
 
 template <typename... Fields>
-Bounds3f ParticleSystem<Fields...>::bounds() const {
+Bounds3f ParticleSystem<Fields...>::bounds() const
+{
   return _particles ? _particles->bounds() : Bounds3f{};
 }
 
 template <typename... Fields>
-void ParticleSystem<Fields...>::render(Renderer &renderer) const {
-  // TODO
-}
+void ParticleSystem<Fields...>::render(Renderer &renderer) const
+{ /* TODO */ }
 
 } // end namespace tcii::physx
 
