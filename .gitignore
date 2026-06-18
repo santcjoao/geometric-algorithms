@@ -19,6 +19,7 @@
 .vs/
 .vscode/
 
+meshes/
 build/
 obj/
 x64/
