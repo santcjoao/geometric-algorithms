@@ -10,6 +10,10 @@
 
 Este projeto demonstra a integração e extensão da estrutura de dados **Range Tree** para atuar em conjunto com um sistema físico de partículas (`ParticleSystem`). O foco dos testes presentes na `main` é validar a utilização da Range Tree para consultas espaciais tridimensionais (AABB) em buffers de partículas contendo múltiplos atributos (como Posição, Velocidade e Cor).
 
+## Link do vídeo no drive
+
+https://drive.google.com/file/d/1y8ri2dJg5MruWDgbdxQjctFW9An2S7oi/view?usp=drive_link
+
 ## Principais Funcionalidades Testadas
 
 - **Construção 3D Multi-atributo**: Construção de uma Range Tree tridimensional aceitando tuplas de dados complexos (Partículas estruturadas através de variados *Fields* via *Templates*).
