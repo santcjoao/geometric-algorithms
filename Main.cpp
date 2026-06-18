@@ -11,32 +11,54 @@
 #include "Pipeline.h"
 #include "TriangleMesh.h"
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
-#include <vector>
+#include <iterator>
+#include <string>
+#include <string_view>
 
 using namespace tcii::cg;
 
 using MyTopology = Topology<FreeListVector>;
 using MyMesh = Mesh<MyTopology>;
 
-// ---- Logging --------------------------------------------------------------
-
-void section(const char *title) { 
-  std::cout << "\n--- " << title << " ---\n"; 
+// Logging
+void section(std::string_view title) {
+  std::cout << "\n--- " << title << " ---\n";
 }
 
-void logMeshInfo(const char* name, size_t v, size_t f) {
-  std::cout << "  Loaded " << name << " (" << v << " vertices, " << f << " faces).\n";
+void logMeshInfo(std::string_view name, size_t vertexCount, size_t faceCount) {
+  std::cout << "  Loaded " << name << " (" << vertexCount << " vertices, "
+             << faceCount << " faces).\n";
 }
 
-// ---- Pipeline Stages ------------------------------------------------------
+// Small helpers 
+/// Counts the elements in an iterator range.
+template <typename Iterator>
+size_t countRange(Iterator begin, Iterator end) {
+  return static_cast<size_t>(std::distance(begin, end));
+}
 
-/// @brief Stage 1: Create initial decoration and color vertices
+/// Prints, on a single line, every ID produced by `runner`.
+/// `runner` receives a callback `bool(size_t id)` and is expected to invoke
+/// it once per ID, mirroring the topology's own visitor-style API.
+template <typename Runner>
+void printIDList(std::string_view label, Runner&& runner) {
+  std::cout << "    " << label << ": ";
+  runner([](size_t id) {
+    std::cout << id << ' ';
+    return true;
+  });
+  std::cout << '\n';
+}
+
+// Pipeline Stages
+/// Stage 1: Create initial decoration and color vertices
 auto stage1 = [](const MyMesh& mesh) {
 
   if (mesh.getTopology().vertexCount() < 3)
     throw std::runtime_error("Degenerate mesh: insufficient vertices in the base geometry.");
-  
+
   using Color = Vec3f;
   using VA = ElementSoA<Color>;
   using TD = TopologyDecoration<MyMesh, VA, void, void, void, void>;
@@ -46,25 +68,25 @@ auto stage1 = [](const MyMesh& mesh) {
   return td;
 };
 
-/// @brief Stage 2: Add vertex normals based on the previous decoration
+/// Stage 2: Add vertex normals based on the previous decoration
 auto stage2 = [](auto previousDecoration) {
   using Color  = Vec3f;
   using Normal = Vec3f;
 
   using VA = ElementSoA<Color, Normal>;
   using TD = TopologyDecoration<MyMesh, VA, void, void, void, void>;
-  
+
   auto td = TD::New(previousDecoration.get());
   set<VertexData, 1>(*td, 0, Normal{0, 0, 1});
   return td;
 };
 
-/// @brief Stage 3: Add weights to the edges
+/// Stage 3: Add weights to the edges
 auto stage3 = [](auto previousDecoration) {
   using OldVA = typename decltype(previousDecoration)::element_type::VA;
   using EA = ElementSoA<float>;
   using TD = TopologyDecoration<MyMesh, OldVA, void, EA, void, void>;
-  
+
   auto td = TD::New(previousDecoration.get());
 
   if (td->mesh()->getTopology().edgeCount() == 0)
@@ -74,55 +96,50 @@ auto stage3 = [](auto previousDecoration) {
   return td;
 };
 
-// ---- Tests ----------------------------------------------------------------
-
+// Tests 
 void testTopologyFunctionalities(MyMesh& mesh) {
   auto& topo = mesh.getTopology();
-  
+
   std::cout << "  Testing iterators:\n";
-  size_t vCount = 0;
-  for (auto it = topo.begin<MyTopology::vert>(); it != topo.end<MyTopology::vert>(); ++it) vCount++;
-  
-  size_t eCount = 0;
-  for (auto it = topo.begin<MyTopology::edge>(); it != topo.end<MyTopology::edge>(); ++it) eCount++;
 
-  size_t fCount = 0;
-  for (auto it = topo.begin<MyTopology::face>(); it != topo.end<MyTopology::face>(); ++it) fCount++;
+  // 1. Iterator tests: Verify if we can iterate over all topological entities
+  const size_t vCount  = countRange(topo.begin<MyTopology::vert>(),   topo.end<MyTopology::vert>());
+  const size_t heCount = countRange(topo.begin<MyTopology::he>(),     topo.end<MyTopology::he>());
+  const size_t eCount  = countRange(topo.begin<MyTopology::edge>(),   topo.end<MyTopology::edge>());
+  const size_t fCount  = countRange(topo.begin<MyTopology::face>(),   topo.end<MyTopology::face>());
+  const size_t bCount  = countRange(topo.begin<MyTopology::bounds>(), topo.end<MyTopology::bounds>());
 
-  size_t bCount = 0;
-  for (auto it = topo.begin<MyTopology::bounds>(); it != topo.end<MyTopology::bounds>(); ++it) bCount++;
-
-  std::cout << "    Iterated over: " << vCount << "v, " << eCount << "e, " << fCount << "f, " << bCount << "b.\n";
+  std::cout << "    Iterated over: " << vCount << "v, " << heCount << "he, "
+             << eCount << "e, " << fCount << "f, " << bCount << "b.\n";
 
   std::cout << "  Testing neighborhood (Vertex 0):\n";
-  std::cout << "    Incident edges: ";
-  topo.incidentElement<MyTopology::edge>(0, [](size_t edgeID) {
-      std::cout << edgeID << " ";
-      return true;
+  // 2. Neighborhood queries: Extract incident elements (O(degree)) and perform BFS (k-Rings)
+  printIDList("Incident edges", [&](auto callback) {
+    topo.incidentElement<MyTopology::edge>(0, callback);
   });
-  std::cout << "\n";
-
-  std::cout << "    1-ring faces: ";
-  topo.kRing<MyTopology::vert>(0, 1, [](size_t faceID) {
-      std::cout << faceID << " ";
-      return true;
+  printIDList("Incident faces", [&](auto callback) {
+    topo.incidentElement<MyTopology::face>(0, callback);
   });
-  std::cout << "\n";
+  printIDList("1-ring faces", [&](auto callback) {
+    topo.kRing<MyTopology::vert>(0, 1, callback);
+  });
+  printIDList("2-ring faces", [&](auto callback) {
+    topo.kRing<MyTopology::vert>(0, 2, callback);
+  });
 
   if (fCount > 0) {
     std::cout << "  Testing neighborhood (Face 0):\n";
-    std::cout << "    1-ring faces: ";
-    topo.kRing<MyTopology::face>(0, 1, [](size_t faceID) {
-        std::cout << faceID << " ";
-        return true;
+    // 3. Face adjacency: Test 1-ring neighbors for a face
+    printIDList("1-ring faces", [&](auto callback) {
+      topo.kRing<MyTopology::face>(0, 1, callback);
     });
-    std::cout << "\n";
   }
 }
 
-void runTests(const char* filename, const char* label) {
+void runTests(const char* filename, std::string_view label) {
   section(label);
 
+  // Parse the Wavefront OBJ file and build a basic geometry container
   auto triangleMesh = readOBJ(filename);
   if (!triangleMesh || triangleMesh->data().vertexCount() == 0) {
     std::cerr << "  [ERROR] Could not read or invalid file: " << filename << '\n';
@@ -133,45 +150,56 @@ void runTests(const char* filename, const char* label) {
 
   try {
     std::cout << "  [INFO] Building topology.\n";
-    auto t0 = std::chrono::steady_clock::now();
+    const auto t0 = std::chrono::steady_clock::now();
     MyMesh mesh(*triangleMesh);
-    auto t1 = std::chrono::steady_clock::now();
+    const auto t1 = std::chrono::steady_clock::now();
     std::cout << "  [INFO] Topology built in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
-              << " ms\n";
+               << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
+               << " ms\n";
 
     testTopologyFunctionalities(mesh);
 
     std::cout << "  [INFO] Executing pipeline with 3 stages.\n";
+    // Construct the rendering pipeline: Color (v) -> Normal (v) -> Weight (e)
     Pipeline renderPipeline(stage1, stage2, stage3);
-    
-    auto t2 = std::chrono::steady_clock::now();
-    auto finalDecoratedMesh = renderPipeline.execute(mesh);
-    auto t3 = std::chrono::steady_clock::now();
-    
+
+    const auto t2 = std::chrono::steady_clock::now();
+    [[maybe_unused]] auto finalDecoratedMesh = renderPipeline.execute(mesh);
+    const auto t3 = std::chrono::steady_clock::now();
+
     std::cout << "  [INFO] Pipeline executed in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
-              << " ms\n";
+               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
+               << " ms\n";
     std::cout << "  [INFO] Pipeline executed successfully. Mesh ready.\n";
 
   } catch (const std::exception& e) {
-      std::cerr << "  [ERROR] Execution interrupted.\n"
-                << "  Reason: " << e.what() << '\n';
+    std::cerr << "  [ERROR] Execution interrupted.\n"
+               << "  Reason: " << e.what() << '\n';
   }
 }
 
-// ---- Main -----------------------------------------------------------------
+// Main
+namespace {
+
+struct DefaultTest {
+  const char* file;
+  const char* label;
+};
+
+constexpr DefaultTest kDefaultTests[] = {
+  {"meshes/tetra.obj", "1. Closed Mesh Test"},  // mesh without boundaries
+  {"meshes/quad.obj",  "2. Open Mesh Test"},    // mesh with boundaries
+};
+
+}  // namespace
 
 int main(int argc, char** argv) {
   if (argc > 1) {
-    std::string title = std::string("Custom Mesh Test: ") + argv[1];
-    runTests(argv[1], title.c_str());
+    const std::string title = "Custom Mesh Test: " + std::string(argv[1]);
+    runTests(argv[1], title);
   } else {
-    // Test with closed mesh (no boundaries)
-    runTests("meshes/tetra.obj", "1. Closed Mesh Test");
-
-    // Test with open mesh (with boundaries)
-    runTests("meshes/quad.obj", "2. Open Mesh Test");
+    for (const auto& test : kDefaultTests)
+      runTests(test.file, test.label);
   }
 
   return EXIT_SUCCESS;
