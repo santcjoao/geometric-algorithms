@@ -28,10 +28,11 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 run: $(TARGET)
-ifdef mesh
-	@./$(TARGET) "$(mesh)"
-else
-	@./$(TARGET)
+ifndef mesh
+	@echo "Erro: arquivo .obj não especificado."
+	@echo "Uso: make run mesh=<arquivo.obj>"
+	@exit 1
 endif
+	@./$(TARGET) "$(mesh)"
 
 .PHONY: all clean run

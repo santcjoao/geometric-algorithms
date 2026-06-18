@@ -184,28 +184,14 @@ void runTests(const char* filename, std::string_view label) {
 }
 
 // Main
-namespace {
-
-struct DefaultTest {
-  const char* file;
-  const char* label;
-};
-
-constexpr DefaultTest kDefaultTests[] = {
-  {"meshes/tetra.obj", "1. Closed Mesh Test"},  // mesh without boundaries
-  {"meshes/quad.obj",  "2. Open Mesh Test"},    // mesh with boundaries
-};
-
-}  // namespace
-
 int main(int argc, char** argv) {
-  if (argc > 1) {
-    const std::string title = "Custom Mesh Test: " + std::string(argv[1]);
-    runTests(argv[1], title);
-  } else {
-    for (const auto& test : kDefaultTests)
-      runTests(test.file, test.label);
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " <mesh.obj>\n";
+    return EXIT_FAILURE;
   }
+
+  const std::string title = "Mesh Test: " + std::string(argv[1]);
+  runTests(argv[1], title);
 
   return EXIT_SUCCESS;
 }
