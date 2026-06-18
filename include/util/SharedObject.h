@@ -7,6 +7,13 @@
 //
 // Author: Paulo Pagliosa
 // Last revision: 06/07/2025
+// 
+// ========
+//
+// Added alias element_type = T;
+//
+// Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
+// Last revision: 17/06/2026
 
 #include <type_traits>
 
