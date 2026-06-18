@@ -3,6 +3,10 @@
 
 Este código implementa uma estrutura de malha Half-Edge com ferramentas de busca de vizinhança, integrada a um sistema de pipeline para adicionar dados extras (decoração) em vértices, arestas e faces.
 
+## Link do vídeo no drive
+
+https://drive.google.com/file/d/1iM5LALDa9cdHbKUFX0yrUlFm1N6BuQ3S/view?usp=sharing
+
 ## Funcionalidades
 - **Construção da Malha:** Lê arquivos `.obj` e cria a representação Half-Edge, suportando malhas fechadas e com buracos.
 - **Iteradores:** Permitem percorrer os elementos da malha (vértices, faces, arestas e bordas).
