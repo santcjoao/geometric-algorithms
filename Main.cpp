@@ -39,19 +39,6 @@ size_t countRange(Iterator begin, Iterator end) {
   return static_cast<size_t>(std::distance(begin, end));
 }
 
-/// Prints, on a single line, every ID produced by `runner`.
-/// `runner` receives a callback `bool(size_t id)` and is expected to invoke
-/// it once per ID, mirroring the topology's own visitor-style API.
-template <typename Runner>
-void printIDList(std::string_view label, Runner&& runner) {
-  std::cout << "    " << label << ": ";
-  runner([](size_t id) {
-    std::cout << id << ' ';
-    return true;
-  });
-  std::cout << '\n';
-}
-
 // Pipeline Stages
 /// Stage 1: Create initial decoration and color vertices
 auto stage1 = [](const MyMesh& mesh) {
@@ -114,25 +101,43 @@ void testTopologyFunctionalities(MyMesh& mesh) {
 
   std::cout << "  Testing neighborhood (Vertex 0):\n";
   // 2. Neighborhood queries: Extract incident elements (O(degree)) and perform BFS (k-Rings)
-  printIDList("Incident edges", [&](auto callback) {
-    topo.incidentElement<MyTopology::edge>(0, callback);
+  std::cout << "    Incident edges: ";
+  topo.incidentElement<MyTopology::edge>(0, [](size_t id) {
+    std::cout << id << ' ';
+    return true;
   });
-  printIDList("Incident faces", [&](auto callback) {
-    topo.incidentElement<MyTopology::face>(0, callback);
+  std::cout << '\n';
+
+  std::cout << "    Incident faces: ";
+  topo.incidentElement<MyTopology::face>(0, [](size_t id) {
+    std::cout << id << ' ';
+    return true;
   });
-  printIDList("1-ring faces", [&](auto callback) {
-    topo.kRing<MyTopology::vert>(0, 1, callback);
+  std::cout << '\n';
+
+  std::cout << "    1-ring faces: ";
+  topo.kRing<MyTopology::vert>(0, 1, [](size_t id) {
+    std::cout << id << ' ';
+    return true;
   });
-  printIDList("2-ring faces", [&](auto callback) {
-    topo.kRing<MyTopology::vert>(0, 2, callback);
+  std::cout << '\n';
+
+  std::cout << "    2-ring faces: ";
+  topo.kRing<MyTopology::vert>(0, 2, [](size_t id) {
+    std::cout << id << ' ';
+    return true;
   });
+  std::cout << '\n';
 
   if (fCount > 0) {
     std::cout << "  Testing neighborhood (Face 0):\n";
     // 3. Face adjacency: Test 1-ring neighbors for a face
-    printIDList("1-ring faces", [&](auto callback) {
-      topo.kRing<MyTopology::face>(0, 1, callback);
+    std::cout << "    1-ring faces: ";
+    topo.kRing<MyTopology::face>(0, 1, [](size_t id) {
+      std::cout << id << ' ';
+      return true;
     });
+    std::cout << '\n';
   }
 }
 
