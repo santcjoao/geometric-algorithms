@@ -75,11 +75,11 @@ template <typename T>
 class ElementAttributes
 {
 public:
-  ElementAttributes(index_t size):
-    _soa{size}
-  {
-    assert(size > 0);
-  }
+    ElementAttributes(index_t size):
+      _soa{size}
+    {
+      // size can be 0 (e.g. 0 boundaries)
+    }
 
   ElementAttributes(ElementAttributes&&) noexcept = default;
 
@@ -115,11 +115,11 @@ template <>
 class ElementAttributes<void>
 {
 public:
-  ElementAttributes(index_t size):
-    _size{size}
-  {
-    assert(size > 0);
-  }
+    ElementAttributes(index_t size):
+      _size{size}
+    {
+      // size can be 0
+    }
 
   ElementAttributes(ElementAttributes&&) noexcept = default;
 

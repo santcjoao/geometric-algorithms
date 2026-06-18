@@ -28,6 +28,10 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 run: $(TARGET)
-	@cd $(BIN_DIR) && ./p2_exec
+ifdef mesh
+	@./$(TARGET) "$(mesh)"
+else
+	@./$(TARGET)
+endif
 
 .PHONY: all clean run

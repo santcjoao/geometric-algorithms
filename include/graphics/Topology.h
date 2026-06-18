@@ -121,18 +121,18 @@ public:
 
   TopologyIteratorBase(const A& collection, index_t pos = 0u):
     _value{collection},
-    _pos{0}
+    _pos{pos}
   {
     if (_pos < _value.size() && !_value.is_active(_pos))
       increment();
   }
 
-  bool operator ==(const TopologyIteratorBase<A>& other)
+  bool operator ==(const TopologyIteratorBase<A>& other) const
   {
-    return _value[_pos] == other._value[other._pos];
+    return _pos == other._pos;
   }
 
-  bool operator !=(const TopologyIteratorBase<A>& other)
+  bool operator !=(const TopologyIteratorBase<A>& other) const
   {
     return !operator==(other);
   }
@@ -170,7 +170,7 @@ public:
   }
 
 private:
-  A& _value;
+  const A& _value;
   index_t _pos;
 
   void increment()
@@ -224,7 +224,7 @@ public:
   Topology(TriangleMesh& mesh);
 
   template<typename TopoElement>
-  auto begin()
+  auto begin() const
   {
     if constexpr (std::is_same_v<TopoElement, vert>)
       return TopologyIteratorBase<vert_collection>(_vertices, 0);
@@ -239,7 +239,7 @@ public:
   }
 
   template<typename TopoElement>
-  auto end()
+  auto end() const
   {
     if constexpr (std::is_same_v<TopoElement, vert>)
       return TopologyIteratorBase<vert_collection>(_vertices, _vertices.size());
@@ -311,10 +311,10 @@ public:
   }
 
   template<typename TopoElement>
-  void incidentElement(const index_t& e, ProcFunc f);
+  void incidentElement(const index_t& e, ProcFunc f) const;
 
   template<typename TopoElement>
-  void kRing(const index_t& e, size_t k, ProcFunc f);
+  void kRing(const index_t& e, size_t k, ProcFunc f) const;
 
 private:
   vert_collection _vertices;
@@ -535,7 +535,7 @@ Topology<Collection, V, HE, E, F, B>::Topology(TriangleMesh& mesh):
 
 template <template <typename...> class Collection, typename V, typename HE, typename E, typename F, typename B>
 template<typename TopoElement>
-void Topology<Collection, V, HE, E, F, B>::incidentElement(const index_t& e, ProcFunc f)
+void Topology<Collection, V, HE, E, F, B>::incidentElement(const index_t& e, ProcFunc f) const
 {
   if constexpr (std::is_same_v<TopoElement, edge>)
   {
@@ -570,7 +570,7 @@ void Topology<Collection, V, HE, E, F, B>::incidentElement(const index_t& e, Pro
 
 template<template <typename...> class Collection, typename V, typename HE, typename E, typename F, typename B>
 template<typename TopoElement>
-void Topology<Collection, V, HE, E, F, B>::kRing(const index_t& e, size_t k, ProcFunc f)
+void Topology<Collection, V, HE, E, F, B>::kRing(const index_t& e, size_t k, ProcFunc f) const
 {
   if (k == 0) return;
 
