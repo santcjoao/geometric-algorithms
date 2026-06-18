@@ -3,7 +3,7 @@
 // Main function for the topology experiment.
 //
 // Authors: Arthur de Andrade, João de Carvalho e Nathan Rezende
-// Last revision: 16/06/2026
+// Last revision: 17/06/2026
 
 #include "graphics/Topology.h"
 #include "Mesh.h"
