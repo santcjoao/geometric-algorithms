@@ -44,15 +44,9 @@ public:
     return _data[index];
   }
 
-  void reserve(size_t n)
-  {
-    _data.reserve(n);
-  }
-
-  size_t size() const
-  {
-    return _data.size();
-  }
+  void reserve(size_t n) { _data.reserve(n); }
+  
+  size_t size() const { return _data.size(); }
 
   index_t push_back(const T& value)
   {
