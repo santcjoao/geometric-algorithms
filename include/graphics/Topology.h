@@ -238,223 +238,7 @@ public:
   static_assert(is_topological_collection<vert_collection>, 
     "The provided collection does not satisfy the topological requirements."); // requires não?
 
-  Topology(TriangleMesh& mesh):
-    _vertices{},
-    _halfEdges{},
-    _edges{},
-    _faces{},
-    _boundaries{}
-  {
-    auto numVerts = mesh.data().vertexCount();
-    auto numFaces = mesh.data().triangleCount();
-
-    _vertices.reserve(numVerts);
-    _halfEdges.reserve(3 * numVerts * 2);
-    _edges.reserve(3 * numVerts);
-    _faces.reserve(2 * numFaces);
-    _boundaries.reserve(0);
-
-    std::cout << "[INFO] [Topology] Mesh: " << numVerts << "v, " << numFaces << "f. Reserving memory." << std::endl;
-
-    for (auto i = 0u; i < numVerts; ++i)
-    {
-      vert v;
-      v.id = i;
-      v.heID = std::numeric_limits<index_t>::max();
-      v.pos = mesh.data().vertices()[i];
-      _vertices.push_back(v);
-    }
-
-    std::cout << "[INFO] [Topology] Inserted vertices: " << _vertices.size() << std::endl;
-
-    // DS to process twins
-    std::map<std::pair<index_t, index_t>, index_t> edgeMap;
-
-    for (auto i = 0u; i < numFaces; ++i)
-    {
-      auto tri = mesh.data().triangles()[i];
-
-      index_t he0_id = _halfEdges.size();
-      index_t he1_id = he0_id + 1;
-      index_t he2_id = he1_id + 1;
-      
-      he he0, he1, he2;
-
-      he0.vID = tri[0];
-      he0.fID = i;
-      he0.next = he1_id;
-      he0.prev = he2_id;
-
-      he1.vID = tri[1];
-      he1.fID = i;
-      he1.next = he2_id;
-      he1.prev = he0_id;
-
-      he2.vID = tri[2];
-      he2.fID = i;
-      he2.next = he0_id;
-      he2.prev = he1_id;
-
-      face f;
-      f.id = i;
-      f.heID = he0_id;
-      _faces.push_back(f);
-
-      // updating he_ids
-      _vertices[tri[0]].heID = he0_id;
-      _vertices[tri[1]].heID = he1_id;
-      _vertices[tri[2]].heID = he2_id;
-
-      _halfEdges.push_back(he0);
-      _halfEdges.push_back(he1);
-      _halfEdges.push_back(he2);
-
-      // verifying twins to each one of the hes
-      index_t current_he_ids[3] = {he0_id, he1_id, he2_id};
-      index_t v_origins[3] = {tri[0], tri[1], tri[2]};
-      index_t v_dests[3] = {tri[1], tri[2], tri[0]};
-
-      for (int j = 0; j < 3; ++j)
-      {
-        index_t current_id = current_he_ids[j];
-        auto key = std::minmax(v_origins[j], v_dests[j]);
-
-        if (edgeMap.find(key) == edgeMap.end())
-        {
-          // key was not found: no twin yet
-          edgeMap[key] = current_id;
-        }
-        else
-        {
-          // found twin
-          index_t twin_id = edgeMap[key];
-
-          // "sew" twins
-          _halfEdges[current_id].twin = twin_id;
-          _halfEdges[twin_id].twin = current_id;
-
-          // make edge
-          edge e;
-          e.id = _edges.size();
-          e.twins[0] = current_id;
-          e.twins[1] = twin_id;
-          _edges.push_back(e);
-
-          // already solved pair
-          edgeMap.erase(key);
-        }
-      }
-    }
-
-    std::cout << "[INFO] [Topology] Faces and twins: " << _halfEdges.size() << " HEs, "
-              << _edges.size() << " edges. Boundaries left in map: "
-              << edgeMap.size() << std::endl;
-
-    // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
-    std::vector<index_t> boundaryHalfEdges;
-    std::map<index_t, index_t> boundaryStartsAt;
-    
-    for (auto const& [chave, id_h_in] : edgeMap)
-    {
-      // A semi-aresta interna (h_in) vai do vértice A para o vértice B
-      index_t v_B = _halfEdges[_halfEdges[id_h_in].next].vID;
-
-      index_t id_h_out = _halfEdges.size();
-        
-      he h_out;
-      h_out.vID = v_B; // Nasce em B e vai para A
-      h_out.fID = std::numeric_limits<index_t>::max(); // Sem face (é borda)
-        
-      // Costura os Twins
-      h_out.twin = id_h_in;
-      _halfEdges[id_h_in].twin = id_h_out;
-
-      // Cria a Aresta (Edge)
-      edge e;
-      e.id = _edges.size();
-      e.twins[0] = id_h_in;
-      e.twins[1] = id_h_out;
-        
-      h_out.eID = e.id;
-      _halfEdges[id_h_in].eID = e.id;
-        
-      _edges.push_back(e);
-      _halfEdges.push_back(h_out);
-      boundaryHalfEdges.push_back(id_h_out);
-
-      // Mapeamento Vital: A semi-aresta de borda que nasce em B é a h_out
-      boundaryStartsAt[v_B] = id_h_out;
-    }
-
-    std::cout << "[INFO] [Topology] Created boundary HEs: " << boundaryHalfEdges.size() << std::endl;
-
-    // edge map is no need
-
-    // echaining the loops
-    for (index_t id_h_out : boundaryHalfEdges)
-    {
-      // Precisamos saber onde essa h_out termina (que é o vértice A)
-      // Para descobrir o vértice A, basta olhar a origem da sua gêmea interna!
-      index_t v_A = _halfEdges[_halfEdges[id_h_out].twin].vID;
-
-      // Verifica se existe uma borda de saída saindo do vértice A
-      auto it = boundaryStartsAt.find(v_A);
-      if (it == boundaryStartsAt.end()) {
-          std::cerr << "[ERROR] [Topology] Non-manifold mesh or degenerate hole.\n";
-          std::cerr << "Vertex " << v_A << " has no outgoing boundary half-edge.\n";
-          throw std::runtime_error("Invalid mesh for Half-Edge (non-manifold).");
-      }
-
-      // O próximo passo lógico é a semi-aresta de borda que nasce em A
-      index_t next_h_out = it->second;
-
-      _halfEdges[id_h_out].next = next_h_out;
-      _halfEdges[next_h_out].prev = id_h_out;
-    }
-
-    std::cout << "[INFO] [Topology] Boundary chaining completed." << std::endl;
-
-    // --- PASSO 3: Extração dos Boundaries ---
-    std::vector<bool> visited(boundaryHalfEdges.size(), false);
-
-    for (size_t i = 0; i < boundaryHalfEdges.size(); ++i)
-    {
-      if (visited[i]) continue;
-
-      bounds b;
-      b.id = _boundaries.size();
-      b.heID = boundaryHalfEdges[i];
-      _boundaries.push_back(b);
-
-      // Dar a volta no buraco para marcar todas como visitadas
-      index_t current_he = boundaryHalfEdges[i];
-      size_t guard = 0;
-      const size_t maxIter = _halfEdges.size() * 2;
-      do
-      {
-        if (++guard > maxIter)
-        {
-          std::cerr << "[TOPO][ERRO] Loop infinito detectado na extracao de boundary "
-                    << _boundaries.size() - 1
-                    << "! HE atual: " << current_he
-                    << ", HE inicio: " << boundaryHalfEdges[i]
-                    << ", iteracoes: " << guard << std::endl;
-          throw std::runtime_error("Loop infinito na extracao de boundaries.");
-        }
-
-        // Encontra qual é o índice real dessa current_he dentro do vetor boundaryHalfEdges
-        // (Usamos std::find para atualizar o array de visitados corretamente)
-        auto it = std::find(boundaryHalfEdges.begin(), boundaryHalfEdges.end(), current_he);
-        if (it != boundaryHalfEdges.end())
-          visited[std::distance(boundaryHalfEdges.begin(), it)] = true;
-
-        current_he = _halfEdges[current_he].next;
-      } while(current_he != boundaryHalfEdges[i]);
-    }
-
-    std::cout << "[INFO] [Topology] Extracted boundaries: " << _boundaries.size() << std::endl;
-    std::cout << "[INFO] [Topology] Construction completed." << std::endl;
-  }
+  Topology(TriangleMesh& mesh);
 
   template<typename TopoElement>
   auto begin()
@@ -546,142 +330,11 @@ public:
   }
 
   template<typename TopoElement>
-  void incidentElement(const index_t& e, ProcFunc f)
-  {
-    if constexpr (std::is_same_v<TopoElement, edge>)
-    {
-      auto he0 = halfEdge<vert>(e);
-
-      do
-      {
-        auto ed = getEdge(he0);
-        if (!f(ed)) return; 
-
-        he0 = next(twin(he0));
-      } while(he0 != halfEdge<vert>(e));
-    }
-    else if constexpr (std::is_same_v<TopoElement, face>)
-    {
-      auto he0 = halfEdge<vert>(e);
-
-      do
-      {
-        if (hasFace(he0))
-        {
-          auto fc = getFace(he0);
-          if (!f(fc)) return;
-        }
-
-        he0 = next(twin(he0));
-      } while(he0 != halfEdge<vert>(e));
-    }
-    else
-      return;
-  }
+  void incidentElement(const index_t& e, ProcFunc f);
 
   // TODO
   template<typename TopoElement>
-  void kRing(const index_t& e, size_t k, ProcFunc f)
-  {
-    if (k == 0) return; // Um 0-anel não possui faces adjacentes a processar
-
-    // Vetor para evitar ciclos e não reprocessar a mesma face no 2-anel, 3-anel, etc.
-    // Inicializado com false para todas as faces.
-    std::vector<bool> visited(_faces.size(), false);
-      
-    // Fila que armazena pares: {ID da Face, Nível Atual do Anel}
-    std::queue<std::pair<index_t, size_t>> q; 
-
-    // --- PASSO 1: Semeando a Fila (Nível 1) ---
-
-    if constexpr (std::is_same_v<TopoElement, vert>)
-    {
-      // Para um vértice, o 1-anel são todas as faces que incidem nele.
-      auto he0 = halfEdge<vert>(e);
-      auto curr_he = he0;
-
-      do
-      {
-        if (hasFace(curr_he))
-        {
-          index_t fID = getFace(curr_he);
-          if (!visited[fID])
-          {
-            visited[fID] = true;
-            q.push({fID, 1});
-            
-            // O ProcFunc retorna um bool. É padrão usá-lo para early-exit.
-            // Se f() retornar false, interrompemos a travessia.
-            if (!f(fID)) return; 
-          }
-        }
-        // Circula pelo vértice (funciona perfeitamente mesmo com buracos 
-        // graças às suas semi-arestas de borda explícitas)
-        curr_he = next(twin(curr_he));
-      } while (curr_he != he0);
-    } 
-    else if constexpr (std::is_same_v<TopoElement, face>)
-    {
-      // Para uma face, o 1-anel são as faces que compartilham suas arestas.
-      // Marcamos a própria face como visitada para não adicioná-la aos anéis subsequentes.
-      visited[e] = true; 
-
-      auto he0 = halfEdge<face>(e);
-      auto curr_he = he0;
-
-      do
-      {
-        auto t = twin(curr_he); // A gêmea pertence à face vizinha
-        if (hasFace(t))
-        {
-          index_t fID = getFace(t);
-          if (!visited[fID])
-          {
-            visited[fID] = true;
-            q.push({fID, 1});
-            
-            if (!f(fID)) return;
-          }
-        }
-        curr_he = next(curr_he); // Circula pelas arestas da face original
-      } while (curr_he != he0);
-    }
-    else
-      return;
-
-    // --- PASSO 2: Expandindo para k > 1 (BFS) ---
-    
-    while (!q.empty())
-    {
-      auto [current_face, current_level] = q.front();
-      q.pop();
-
-      // Se a face que tiramos da fila já atingiu o limite k, 
-      // não precisamos olhar para os vizinhos dela.
-      if (current_level >= k) continue;
-
-      // Obtém as faces adjacentes à face atual (compartilham aresta)
-      auto he0 = halfEdge<face>(current_face);
-      auto curr_he = he0;
-
-      do
-      {
-        auto t = twin(curr_he);
-        if (hasFace(t)) // Ignora buracos (fID == max)
-        {
-          index_t fID = getFace(t);
-          if (!visited[fID])
-          {
-            visited[fID] = true;
-            q.push({fID, current_level + 1});
-            
-            if (!f(fID)) return;
-          }
-        }
-        curr_he = next(curr_he);
-      } while (curr_he != he0);
-    }
-  }
+  void kRing(const index_t& e, size_t k, ProcFunc f);
 
 private:
   vert_collection _vertices;
@@ -690,6 +343,373 @@ private:
   face_collection _faces;
   bounds_collection _boundaries;
 };
+
+
+template <template <typename...> class Collection, typename V, typename HE, typename E, typename F, typename B>
+Topology<Collection, V, HE, E, F, B>::Topology(TriangleMesh& mesh):
+    _vertices{},
+    _halfEdges{},
+    _edges{},
+    _faces{},
+    _boundaries{}
+{
+  auto numVerts = mesh.data().vertexCount();
+  auto numFaces = mesh.data().triangleCount();
+
+  _vertices.reserve(numVerts);
+  _halfEdges.reserve(3 * numVerts * 2);
+  _edges.reserve(3 * numVerts);
+  _faces.reserve(2 * numFaces);
+  _boundaries.reserve(0);
+
+  std::cout << "[INFO] [Topology] Mesh: " << numVerts << "v, " << numFaces << "f. Reserving memory." << std::endl;
+
+  for (auto i = 0u; i < numVerts; ++i)
+  {
+    vert v;
+    v.id = i;
+    v.heID = std::numeric_limits<index_t>::max();
+    v.pos = mesh.data().vertices()[i];
+    _vertices.push_back(v);
+  }
+
+  std::cout << "[INFO] [Topology] Inserted vertices: " << _vertices.size() << std::endl;
+
+  // DS to process twins
+  std::map<std::pair<index_t, index_t>, index_t> edgeMap;
+
+  for (auto i = 0u; i < numFaces; ++i)
+  {
+    auto tri = mesh.data().triangles()[i];
+
+    index_t he0_id = _halfEdges.size();
+    index_t he1_id = he0_id + 1;
+    index_t he2_id = he1_id + 1;
+    
+    he he0, he1, he2;
+
+    he0.vID = tri[0];
+    he0.fID = i;
+    he0.next = he1_id;
+    he0.prev = he2_id;
+
+    he1.vID = tri[1];
+    he1.fID = i;
+    he1.next = he2_id;
+    he1.prev = he0_id;
+
+    he2.vID = tri[2];
+    he2.fID = i;
+    he2.next = he0_id;
+    he2.prev = he1_id;
+
+    face f;
+    f.id = i;
+    f.heID = he0_id;
+    _faces.push_back(f);
+
+    // updating he_ids
+    _vertices[tri[0]].heID = he0_id;
+    _vertices[tri[1]].heID = he1_id;
+    _vertices[tri[2]].heID = he2_id;
+
+    _halfEdges.push_back(he0);
+    _halfEdges.push_back(he1);
+    _halfEdges.push_back(he2);
+
+    // verifying twins to each one of the hes
+    index_t current_he_ids[3] = {he0_id, he1_id, he2_id};
+    index_t v_origins[3] = {tri[0], tri[1], tri[2]};
+    index_t v_dests[3] = {tri[1], tri[2], tri[0]};
+
+    for (int j = 0; j < 3; ++j)
+    {
+      index_t current_id = current_he_ids[j];
+      auto key = std::minmax(v_origins[j], v_dests[j]);
+
+      if (edgeMap.find(key) == edgeMap.end())
+      {
+        // key was not found: no twin yet
+        edgeMap[key] = current_id;
+      }
+      else
+      {
+        // found twin
+        index_t twin_id = edgeMap[key];
+
+        // "sew" twins
+        _halfEdges[current_id].twin = twin_id;
+        _halfEdges[twin_id].twin = current_id;
+
+        // make edge
+        edge e;
+        e.id = _edges.size();
+        e.twins[0] = current_id;
+        e.twins[1] = twin_id;
+        _edges.push_back(e);
+
+        // already solved pair
+        edgeMap.erase(key);
+      }
+    }
+  }
+
+  std::cout << "[INFO] [Topology] Faces and twins: " << _halfEdges.size() << " HEs, "
+            << _edges.size() << " edges. Boundaries left in map: "
+            << edgeMap.size() << std::endl;
+
+  // making boundaries: the half edges left on the edgeMap are the twins of the bounds' hes
+  std::vector<index_t> boundaryHalfEdges;
+  std::map<index_t, index_t> boundaryStartsAt;
+  
+  for (auto const& [chave, id_h_in] : edgeMap)
+  {
+    // A semi-aresta interna (h_in) vai do vértice A para o vértice B
+    index_t v_B = _halfEdges[_halfEdges[id_h_in].next].vID;
+
+    index_t id_h_out = _halfEdges.size();
+      
+    he h_out;
+    h_out.vID = v_B; // Nasce em B e vai para A
+    h_out.fID = std::numeric_limits<index_t>::max(); // Sem face (é borda)
+    h_out.next = std::numeric_limits<index_t>::max();
+    h_out.prev = std::numeric_limits<index_t>::max();
+    h_out.next = std::numeric_limits<index_t>::max();
+    h_out.prev = std::numeric_limits<index_t>::max();
+      
+    // Costura os Twins
+    h_out.twin = id_h_in;
+    _halfEdges[id_h_in].twin = id_h_out;
+
+    // Cria a Aresta (Edge)
+    edge e;
+    e.id = _edges.size();
+    e.twins[0] = id_h_in;
+    e.twins[1] = id_h_out;
+      
+    h_out.eID = e.id;
+    _halfEdges[id_h_in].eID = e.id;
+      
+    _edges.push_back(e);
+    _halfEdges.push_back(h_out);
+    boundaryHalfEdges.push_back(id_h_out);
+
+    // Mapeamento Vital: A semi-aresta de borda que nasce em B é a h_out
+    boundaryStartsAt[v_B] = id_h_out;
+  }
+
+  std::cout << "[INFO] [Topology] Created boundary HEs: " << boundaryHalfEdges.size() << std::endl;
+
+  // edge map is no need
+
+  // echaining the loops
+  for (index_t id_h_out : boundaryHalfEdges)
+  {
+    // Precisamos saber onde essa h_out termina (que é o vértice A)
+    // Para descobrir o vértice A, basta olhar a origem da sua gêmea interna!
+    index_t v_A = _halfEdges[_halfEdges[id_h_out].twin].vID;
+
+    // Verifica se existe uma borda de saída saindo do vértice A
+    auto it = boundaryStartsAt.find(v_A);
+    if (it == boundaryStartsAt.end()) {
+        std::cerr << "[WARNING] [Topology] Degenerate hole at vertex " << v_A << ". Skipping chaining.\n";
+        continue;
+    }
+
+    // O próximo passo lógico é a semi-aresta de borda que nasce em A
+    index_t next_h_out = it->second;
+
+    _halfEdges[id_h_out].next = next_h_out;
+    _halfEdges[next_h_out].prev = id_h_out;
+  }
+
+  std::cout << "[INFO] [Topology] Boundary chaining completed." << std::endl;
+
+  // --- PASSO 3: Extração dos Boundaries ---
+  std::vector<bool> visited(boundaryHalfEdges.size(), false);
+
+  for (size_t i = 0; i < boundaryHalfEdges.size(); ++i)
+  {
+    if (visited[i]) continue;
+
+    bounds b;
+    b.id = _boundaries.size();
+    b.heID = boundaryHalfEdges[i];
+    _boundaries.push_back(b);
+
+    // Dar a volta no buraco para marcar todas como visitadas
+    index_t current_he = boundaryHalfEdges[i];
+    size_t guard = 0;
+    const size_t maxIter = _halfEdges.size() * 2;
+    do
+    {
+      if (++guard > maxIter)
+      {
+        std::cerr << "[TOPO][ERRO] Loop infinito detectado na extracao de boundary "
+                  << _boundaries.size() - 1
+                  << "! HE atual: " << current_he
+                  << ", HE inicio: " << boundaryHalfEdges[i]
+                  << ", iteracoes: " << guard << std::endl;
+        std::cerr << "Ignorando borda aberta/defeituosa e continuando.\n";
+        break;
+      }
+
+      // Encontra qual é o índice real dessa current_he dentro do vetor boundaryHalfEdges
+      // (Usamos std::find para atualizar o array de visitados corretamente)
+      auto it = std::find(boundaryHalfEdges.begin(), boundaryHalfEdges.end(), current_he);
+      if (it != boundaryHalfEdges.end())
+        visited[std::distance(boundaryHalfEdges.begin(), it)] = true;
+
+      current_he = _halfEdges[current_he].next;
+      if (current_he == std::numeric_limits<index_t>::max()) {
+          std::cerr << "[WARNING] Reached open end of degenerate boundary. Stopping extraction.\n";
+          break;
+      }
+    } while(current_he != boundaryHalfEdges[i]);
+  }
+
+  std::cout << "[INFO] [Topology] Extracted boundaries: " << _boundaries.size() << std::endl;
+  std::cout << "[INFO] [Topology] Construction completed." << std::endl;
+}
+
+template <template <typename...> class Collection, typename V, typename HE, typename E, typename F, typename B>
+template<typename TopoElement>
+void Topology<Collection, V, HE, E, F, B>::incidentElement(const index_t& e, ProcFunc f)
+{
+  if constexpr (std::is_same_v<TopoElement, edge>)
+  {
+    auto he0 = halfEdge<vert>(e);
+
+    do
+    {
+      auto ed = getEdge(he0);
+      if (!f(ed)) return; 
+
+      he0 = next(twin(he0));
+    } while(he0 != halfEdge<vert>(e));
+  }
+  else if constexpr (std::is_same_v<TopoElement, face>)
+  {
+    auto he0 = halfEdge<vert>(e);
+
+    do
+    {
+      if (hasFace(he0))
+      {
+        auto fc = getFace(he0);
+        if (!f(fc)) return;
+      }
+
+      he0 = next(twin(he0));
+    } while(he0 != halfEdge<vert>(e));
+  }
+  else
+    return;
+}
+
+template<template <typename...> class Collection, typename V, typename HE, typename E, typename F, typename B>
+template<typename TopoElement>
+void Topology<Collection, V, HE, E, F, B>::kRing(const index_t& e, size_t k, ProcFunc f)
+{
+  if (k == 0) return; // Um 0-anel não possui faces adjacentes a processar
+
+  // Vetor para evitar ciclos e não reprocessar a mesma face no 2-anel, 3-anel, etc.
+  // Inicializado com false para todas as faces.
+  std::vector<bool> visited(_faces.size(), false);
+    
+  // Fila que armazena pares: {ID da Face, Nível Atual do Anel}
+  std::queue<std::pair<index_t, size_t>> q; 
+
+  // --- PASSO 1: Semeando a Fila (Nível 1) ---
+
+  if constexpr (std::is_same_v<TopoElement, vert>)
+  {
+    // Para um vértice, o 1-anel são todas as faces que incidem nele.
+    auto he0 = halfEdge<vert>(e);
+    auto curr_he = he0;
+
+    do
+    {
+      if (hasFace(curr_he))
+      {
+        index_t fID = getFace(curr_he);
+        if (!visited[fID])
+        {
+          visited[fID] = true;
+          q.push({fID, 1});
+          
+          // O ProcFunc retorna um bool. É padrão usá-lo para early-exit.
+          // Se f() retornar false, interrompemos a travessia.
+          if (!f(fID)) return; 
+        }
+      }
+      // Circula pelo vértice (funciona perfeitamente mesmo com buracos 
+      // graças às suas semi-arestas de borda explícitas)
+      curr_he = next(twin(curr_he));
+    } while (curr_he != he0);
+  } 
+  else if constexpr (std::is_same_v<TopoElement, face>)
+  {
+    // Para uma face, o 1-anel são as faces que compartilham suas arestas.
+    // Marcamos a própria face como visitada para não adicioná-la aos anéis subsequentes.
+    visited[e] = true; 
+
+    auto he0 = halfEdge<face>(e);
+    auto curr_he = he0;
+
+    do
+    {
+      auto t = twin(curr_he); // A gêmea pertence à face vizinha
+      if (hasFace(t))
+      {
+        index_t fID = getFace(t);
+        if (!visited[fID])
+        {
+          visited[fID] = true;
+          q.push({fID, 1});
+          
+          if (!f(fID)) return;
+        }
+      }
+      curr_he = next(curr_he); // Circula pelas arestas da face original
+    } while (curr_he != he0);
+  }
+  else
+    return;
+
+  // --- PASSO 2: Expandindo para k > 1 (BFS) ---
+  
+  while (!q.empty())
+  {
+    auto [current_face, current_level] = q.front();
+    q.pop();
+
+    // Se a face que tiramos da fila já atingiu o limite k, 
+    // não precisamos olhar para os vizinhos dela.
+    if (current_level >= k) continue;
+
+    // Obtém as faces adjacentes à face atual (compartilham aresta)
+    auto he0 = halfEdge<face>(current_face);
+    auto curr_he = he0;
+
+    do
+    {
+      auto t = twin(curr_he);
+      if (hasFace(t)) // Ignora buracos (fID == max)
+      {
+        index_t fID = getFace(t);
+        if (!visited[fID])
+        {
+          visited[fID] = true;
+          q.push({fID, current_level + 1});
+          
+          if (!f(fID)) return;
+        }
+      }
+      curr_he = next(curr_he);
+    } while (curr_he != he0);
+  }
+}
 
 } // end namespace tcii::cg
 

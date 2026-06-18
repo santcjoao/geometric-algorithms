@@ -80,7 +80,7 @@ public:
   bool is_active(index_t index) const
   {
     for(auto i : _free_indices)
-        if(i == index) return false;
+      if(i == index) return false;
     return true;
   }
 
