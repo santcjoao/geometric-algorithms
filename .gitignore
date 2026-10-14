@@ -1,9 +1,20 @@
-﻿# Add any directories, files, or patterns you don't want to be tracked by version control
-.vs/
-x64/
-*.ilk
-*.pdb
-*.vcxproj.user
+# Binaries and Object Files
+*.o
+*.obj
 *.exe
-*.iobj
-*.ipdb
+*.out
+avl
+p2_exec
+
+# Build Directories
+build/
+bin/
+obj/
+
+# IDE and Editor Metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
